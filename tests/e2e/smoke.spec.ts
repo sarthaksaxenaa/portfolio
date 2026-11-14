@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 test("home loads with the right title, heading and no console errors", async ({ page }) => {
   const errors: string[] = [];
@@ -125,5 +126,75 @@ test.describe("motion", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator("#carenexus-heading")).toBeVisible();
     await ctx.close();
+  });
+});
+
+test.describe("case studies", () => {
+  test("decisions pin and walk sideways on desktop, without page overflow", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    const block = page.locator("#rideshare [data-pin]");
+    await expect(block).toHaveClass(/is-pinned/);
+    const track = block.locator("[data-pin-track]");
+    const x = () => track.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+    await block.scrollIntoViewIfNeeded();
+    const before = await x();
+    await page.mouse.wheel(0, 500);
+    await expect.poll(x).toBeLessThan(before - 50);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    // While pinned, nothing that comes after the block may slide up underneath it.
+    const facts = page.locator("#rideshare ul").last();
+    const [blockBox, factsBox] = [await block.boundingBox(), await facts.boundingBox()];
+    expect(factsBox!.y).toBeGreaterThanOrEqual(blockBox!.y + blockBox!.height - 1);
+  });
+
+  test("decisions stay a normal stacked list on a phone", async ({ browser }) => {
+    const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.locator("#rideshare [data-pin]")).not.toHaveClass(/is-pinned/);
+    await ctx.close();
+  });
+
+  test("the nav marks the chapter you are reading and the light takes its colour", async ({ page }) => {
+    await page.goto("/");
+    await page.locator("#carenexus-heading").scrollIntoViewIfNeeded();
+    await page.mouse.wheel(0, 200);
+    await expect(page.locator('nav a[aria-current="location"]')).toHaveAttribute("href", "#carenexus");
+    await expect
+      .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue("--glow")))
+      .toBe("155 107 255");
+  });
+});
+
+test.describe("accessibility", () => {
+  for (const motion of ["on", "off"] as const) {
+    test(`no serious or critical axe violations (motion ${motion})`, async ({ page }) => {
+      await page.goto("/");
+      if (motion === "off") await page.getByRole("switch", { name: "Motion" }).click();
+      // Wait until reveals are set up, or the "all visible" check below passes before they start.
+      else await expect(page.locator("#grind-heading")).toHaveAttribute("data-split-ready", "");
+      // Let reveals finish so axe sees final colours, not mid-fade opacity.
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await expect
+        .poll(() =>
+          page.evaluate(() =>
+            [...document.querySelectorAll("[data-reveal]")].every((el) => getComputedStyle(el).opacity === "1"),
+          ),
+        )
+        .toBe(true);
+      const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+      const bad = results.violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+      expect(bad.map((v) => `${v.id}: ${v.nodes.length} × ${v.nodes[0]?.target}`)).toEqual([]);
+    });
+  }
+
+  test("keyboard: skip link is first and moves focus to main", async ({ page }) => {
+    await page.goto("/");
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "Skip to content" });
+    await expect(skip).toBeFocused();
+    await expect(skip).toBeVisible();
   });
 });
