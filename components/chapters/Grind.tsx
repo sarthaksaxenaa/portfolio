@@ -16,7 +16,7 @@ export function Grind() {
     <section id="grind" aria-labelledby="grind-heading" className="px-6 py-32">
       <div className="mx-auto flex max-w-6xl flex-col gap-16">
         <SectionHeader chapter={chapter} id="grind-heading" />
-        <p className="max-w-2xl text-lg text-muted">
+        <p data-fill className="max-w-3xl text-2xl leading-snug text-text md:text-3xl">
           It started the way it starts for everyone: tutorials, then the uncomfortable part where
           the tutorials stop. So, reps. Lots of small, boring, unglamorous reps.
         </p>

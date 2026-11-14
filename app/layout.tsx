@@ -11,7 +11,9 @@ import { Reveals } from "@/components/motion/Reveals";
 import { PinnedTracks } from "@/components/motion/PinnedTracks";
 import { ChapterObserver } from "@/components/motion/ChapterObserver";
 import { SceneLayer } from "@/components/scene/SceneLayer";
-import { motionBootScript } from "@/lib/motion";
+import { motionBootScript, preloadBootScript } from "@/lib/motion";
+import { Preloader } from "@/components/motion/Preloader";
+import { Magnetic } from "@/components/motion/Magnetic";
 import "./globals.css";
 
 const instrumentSerif = localFont({
@@ -55,6 +57,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: motionBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: preloadBootScript }} />
       </head>
       <body className="min-h-dvh bg-bg text-text">
         <a
@@ -71,6 +74,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Reveals />
           <PinnedTracks />
           <ChapterObserver />
+          <Magnetic />
+          <Preloader />
         </MotionProvider>
       </body>
     </html>

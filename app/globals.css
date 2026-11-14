@@ -230,3 +230,56 @@ html[data-cursor="on"] .is-pinned .light-card::after {
   background-attachment: scroll;
   background-image: radial-gradient(circle 320px at var(--lx, -999px) var(--ly, -999px), rgb(255 255 255 / 0.045), transparent 70%);
 }
+
+/* ───────────── Extras (v0.8) ───────────── */
+
+/* Preloader: exists only when the boot script set data-preload (motion on, first visit). */
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 2rem 1.5rem;
+  background: var(--color-bg);
+  transition: clip-path 800ms cubic-bezier(0.76, 0, 0.24, 1);
+  clip-path: inset(0 0 0 0);
+}
+html[data-preload] .preloader {
+  display: flex;
+}
+html[data-preload="done"] .preloader {
+  clip-path: inset(0 0 100% 0); /* shutter lifts */
+}
+/* Safety net: even if scripts never run, the preloader is gone at 3 s. */
+html[data-preload="on"] .preloader {
+  animation: preload-failsafe 0s 3s forwards;
+}
+@keyframes preload-failsafe {
+  to {
+    visibility: hidden;
+  }
+}
+.preloader-count {
+  font-size: clamp(5rem, 22vw, 18rem);
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.preloader-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+/* Nothing behind the preloader should scroll while it is up. */
+html[data-preload="on"] {
+  overflow: hidden;
+}
+
+[data-magnetic] {
+  display: inline-block;
+  will-change: transform;
+}

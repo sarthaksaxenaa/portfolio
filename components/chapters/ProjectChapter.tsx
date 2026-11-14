@@ -40,6 +40,7 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
+                  data-magnetic
                   className="rounded-full px-4 py-2 text-sm font-medium text-bg"
                   style={{ background: project.accent }}
                 >

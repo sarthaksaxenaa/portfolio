@@ -43,12 +43,14 @@ export function Warmup() {
         <div className="flex flex-wrap gap-3 pt-2">
           <a
             href="#rideshare"
+            data-magnetic
             className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-bg transition-opacity hover:opacity-85"
           >
             See the work
           </a>
           <a
             href={`mailto:${profile.email}`}
+            data-magnetic
             className="rounded-full border border-hairline px-5 py-2.5 text-sm text-text transition-colors hover:border-text"
           >
             {profile.email}
