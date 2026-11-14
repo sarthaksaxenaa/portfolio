@@ -70,7 +70,7 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
             {project.decisions.map((d, i) => (
               <li
                 key={d.context}
-                className="flex flex-col gap-3 rounded-2xl border border-hairline bg-surface-1 p-6"
+                className="light-card flex flex-col gap-3 rounded-2xl border border-hairline bg-surface-1 p-6"
               >
                 <span className="font-mono text-xs text-[var(--chapter-accent)]">
                   {String(i + 1).padStart(2, "0")}

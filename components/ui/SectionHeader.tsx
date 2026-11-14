@@ -16,7 +16,7 @@ export function SectionHeader({ chapter, id, as: Tag = "h2", className = "" }: P
   return (
     <header className={`flex flex-col gap-4 ${className}`}>
       <Eyebrow chapter={chapter} />
-      <Tag id={id} className="font-display text-[clamp(2.5rem,7vw,6rem)] font-bold leading-[0.92] tracking-tight">
+      <Tag id={id} className="light-text font-display text-[clamp(2.5rem,7vw,6rem)] font-bold leading-[0.92] tracking-tight">
         {chapter.title}
       </Tag>
     </header>

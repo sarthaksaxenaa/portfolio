@@ -18,7 +18,7 @@ export function Cooldown() {
         </h2>
         <a
           href={`mailto:${profile.email}`}
-          className="group w-fit font-display text-[clamp(2.25rem,8vw,7.5rem)] font-bold leading-[0.95] tracking-tight"
+          className="light-text group w-fit font-display text-[clamp(2.25rem,8vw,7.5rem)] font-bold leading-[0.95] tracking-tight"
         >
           Say hi<span className="text-muted transition-colors group-hover:text-text">.</span>
           <span className="mt-4 block break-all font-mono text-[clamp(0.9rem,2vw,1.25rem)] font-normal tracking-normal text-muted underline-offset-8 group-hover:text-text group-hover:underline">

@@ -33,7 +33,7 @@ export function Grind() {
         </dl>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <article className="flex flex-col gap-4 rounded-2xl border border-hairline bg-surface-1 p-6">
+          <article className="flex flex-col gap-4 light-card rounded-2xl border border-hairline bg-surface-1 p-6">
             <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
               First paid rep · {prodigy.period}
             </p>
@@ -53,7 +53,7 @@ export function Grind() {
           </article>
 
           <div className="flex flex-col gap-6">
-            <article className="flex flex-col gap-3 rounded-2xl border border-hairline bg-surface-1 p-6">
+            <article className="flex flex-col gap-3 light-card rounded-2xl border border-hairline bg-surface-1 p-6">
               <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
                 Smart India Hackathon 2025 · internal round
               </p>
@@ -62,7 +62,7 @@ export function Grind() {
                 Proposed and architected an AI-based online exam proctoring system.
               </p>
             </article>
-            <article className="flex flex-col gap-3 rounded-2xl border border-hairline bg-surface-1 p-6">
+            <article className="flex flex-col gap-3 light-card rounded-2xl border border-hairline bg-surface-1 p-6">
               <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
                 Side project · {skillmatrix.stack.join(" · ")}
               </p>
