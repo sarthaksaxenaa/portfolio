@@ -24,8 +24,11 @@ export function detectTier(h: DeviceHints): Tier {
   if (!h.webgl || h.saveData) return "none";
   const cores = h.cores ?? 4;
   const mem = h.memoryGb ?? 4;
+  // Phones and narrow screens: no particles. A background effect is not worth a phone's
+  // battery and main thread; Lighthouse mobile measured ~800 ms of blocking time with it on.
+  // Checked before the weak-hardware rule, which would otherwise hand a weak phone "low".
+  if (h.coarsePointer || (h.viewportWidth ?? 1440) < 768) return "none";
   if (cores <= 2 || mem <= 2) return "low";
-  if (h.coarsePointer || (h.viewportWidth ?? 1440) < 768) return cores >= 8 && mem >= 6 ? "mid" : "low";
   if (cores >= 8 && mem >= 8) return "high";
   return "mid";
 }

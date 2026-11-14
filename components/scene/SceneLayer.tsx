@@ -8,10 +8,12 @@ import { useMotion } from "@/components/motion/MotionProvider";
 // three.js and the shaders only download after the page is interactive, never on the server.
 const ParticleField = dynamic(() => import("./ParticleField"), { ssr: false });
 
+/** After the load event and the next idle period: 3D never competes with first paint or hydration. */
 const whenIdle = (cb: () => void) => {
   const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-  if (w.requestIdleCallback) w.requestIdleCallback(cb, { timeout: 1500 });
-  else setTimeout(cb, 200);
+  const idle = () => (w.requestIdleCallback ? w.requestIdleCallback(cb, { timeout: 4000 }) : setTimeout(cb, 300));
+  if (document.readyState === "complete") idle();
+  else window.addEventListener("load", idle, { once: true });
 };
 
 /**
