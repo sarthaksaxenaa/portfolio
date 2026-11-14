@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { clampDt, cursorMode, damp, INTERACTIVE, settled, type CursorMode } from "@/lib/cursor";
+import { useMotion } from "@/components/motion/MotionProvider";
 
 const GLOW_LAMBDA = 9; // the ambient glow trails a little
 const RING_LAMBDA = 22; // the ring follows tightly
 
-function readMode(): CursorMode {
+function readMode(motionOff: boolean): CursorMode {
   if (typeof window === "undefined" || !window.matchMedia) return "off";
   return cursorMode({
     finePointer: window.matchMedia("(pointer: fine)").matches,
     reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    motionOff,
   });
 }
 
@@ -21,6 +23,8 @@ function readMode(): CursorMode {
  * The loop stops when the light has caught up with the pointer, so an idle page costs nothing.
  */
 export function CursorLight() {
+  // Motion already folds in prefers-reduced-motion and the visitor's MOTION OFF switch.
+  const motionOff = !useMotion().enabled;
   const [mode, setMode] = useState<CursorMode>("off");
   const glowRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
@@ -29,11 +33,11 @@ export function CursorLight() {
   // Re-evaluate when the user plugs in a mouse or changes their motion setting.
   useEffect(() => {
     const queries = ["(pointer: fine)", "(prefers-reduced-motion: reduce)"].map((q) => window.matchMedia(q));
-    const update = () => setMode(readMode());
+    const update = () => setMode(readMode(motionOff));
     update();
     queries.forEach((q) => q.addEventListener("change", update));
     return () => queries.forEach((q) => q.removeEventListener("change", update));
-  }, []);
+  }, [motionOff]);
 
   useEffect(() => {
     const root = document.documentElement;
