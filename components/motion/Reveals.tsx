@@ -43,6 +43,23 @@ export function Reveals() {
           });
         });
 
+        // Manifesto lines: words fill from dim to full as you scroll through them.
+        gsap.utils.toArray<HTMLElement>("[data-fill]").forEach((el) => {
+          // aria "none": words stay plain text for screen readers (aria-label is not allowed on a <p>).
+          const split = SplitText.create(el, { type: "words", wordsClass: "fill-word", aria: "none" });
+          splits.push(split);
+          gsap.fromTo(
+            split.words,
+            { opacity: 0.18 },
+            {
+              opacity: 1,
+              ease: "none",
+              stagger: 0.1,
+              scrollTrigger: { trigger: el, start: "top 80%", end: "bottom 45%", scrub: true },
+            },
+          );
+        });
+
         ScrollTrigger.batch("[data-reveal]", {
           start: "top 90%",
           once: true,
