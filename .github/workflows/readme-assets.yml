@@ -1,0 +1,60 @@
+name: README Assets
+
+# Regenerates docs/assets (banner, measured stats card, stats.json) from real runs:
+# unit tests, e2e on three engines, Lighthouse mobile and a probe of the live site.
+# Commits only when something changed, as the repo owner, with [skip ci].
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+  schedule:
+    - cron: "41 2 * * 1" # Mondays 02:41 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: readme-assets
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: mkdir -p reports
+      - name: Unit tests
+        run: npx vitest run --reporter=json --outputFile=reports/vitest.json
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: End-to-end tests (Chromium, Firefox, WebKit)
+        run: npx playwright test --reporter=json > reports/playwright.json
+        env:
+          PW_ALL_BROWSERS: "1"
+      - name: Lighthouse (mobile, 3 runs)
+        run: npx --yes @lhci/cli@0.16.1 collect
+      - name: Generate artwork
+        run: node scripts/readme/generate.mjs
+        env:
+          SITE_URL: https://sarthxen.vercel.app
+      - name: Commit if changed
+        run: |
+          # stats.json carries a date; ignore runs where nothing but the date moved.
+          if git diff --quiet -- docs/assets/banner.svg docs/assets/stats.svg \
+             && [ -z "$(git ls-files --others --exclude-standard docs/assets)" ]; then
+            echo "No changes."; exit 0
+          fi
+          git config user.name "Sarthak090805"
+          git config user.email "180917503+sarthaksaxenaa@users.noreply.github.com"
+          git add docs/assets
+          git commit -m "docs(readme): refresh generated assets [skip ci]"
+          git push origin HEAD:main
