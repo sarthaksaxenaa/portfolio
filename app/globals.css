@@ -50,3 +50,113 @@ body {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
+
+/* ───────────── Cursor light (v0.3) ─────────────
+   CursorLight.tsx writes --mx / --my (viewport px) on <html> and sets data-cursor="on"
+   only for fine pointers without reduced motion. Everything below is inert otherwise. */
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+.cursor-layers > * {
+  position: fixed;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+html[data-cursor-visible="true"] .cursor-layers > * {
+  opacity: 1;
+}
+
+.cursor-dots {
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.22) 1px, transparent 1.5px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(circle 240px at var(--mx) var(--my), #000 0%, transparent 100%);
+}
+
+.cursor-glow {
+  top: 0;
+  left: 0;
+  z-index: 0;
+  width: 720px;
+  height: 720px;
+  margin: -360px 0 0 -360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 0.075) 0%, transparent 62%);
+  will-change: transform;
+}
+
+.cursor-ring {
+  top: 0;
+  left: 0;
+  z-index: 60;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1px solid rgb(255 255 255 / 0.55);
+  border-radius: 50%;
+  transition: opacity 400ms ease, scale 250ms cubic-bezier(0.22, 1, 0.36, 1), border-color 250ms ease;
+  will-change: transform;
+}
+html[data-cursor-hover] .cursor-ring {
+  scale: 1.7;
+  border-color: rgb(255 255 255 / 0.9);
+}
+
+.cursor-dot {
+  top: 0;
+  left: 0;
+  z-index: 61;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #fff;
+  mix-blend-mode: difference;
+  will-change: transform;
+}
+
+/* The ring replaces the arrow only while it is actually showing. */
+html[data-cursor-visible="true"],
+html[data-cursor-visible="true"] a,
+html[data-cursor-visible="true"] button {
+  cursor: none;
+}
+
+/* Card border light: one fixed-attachment gradient shared by every card, masked to the 1px border. */
+.light-card {
+  position: relative;
+  isolation: isolate;
+}
+html[data-cursor="on"] .light-card::before,
+html[data-cursor="on"] .light-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-attachment: fixed;
+}
+html[data-cursor="on"] .light-card::before {
+  padding: 1px;
+  background-image: radial-gradient(circle 260px at var(--mx) var(--my), rgb(255 255 255 / 0.6), transparent 70%);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+html[data-cursor="on"] .light-card::after {
+  z-index: -1;
+  background-image: radial-gradient(circle 320px at var(--mx) var(--my), rgb(255 255 255 / 0.045), transparent 70%);
+}
+
+/* Text light: headings rest a touch dimmer and brighten where the light falls. */
+html[data-cursor="on"] .light-text {
+  color: transparent;
+  background-image: radial-gradient(circle 320px at var(--mx) var(--my), #ffffff 0%, #c4c4cb 75%);
+  background-attachment: fixed;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
