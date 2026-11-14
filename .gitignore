@@ -50,3 +50,6 @@ next-env.d.ts
 AGENTS.md
 CLAUDE.md
 .claude/
+
+# lighthouse ci reports
+/.lighthouseci/

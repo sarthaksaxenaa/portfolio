@@ -15,6 +15,13 @@ export default defineConfig({
       // PW_CHANNEL=chrome uses an installed Google Chrome instead of Playwright's bundled Chromium.
       use: { ...devices["Desktop Chrome"], channel: process.env.PW_CHANNEL || undefined },
     },
+    // Firefox and Safari's engine run in CI (PW_ALL_BROWSERS=1), where their binaries are installed.
+    ...(process.env.PW_ALL_BROWSERS
+      ? [
+          { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+          { name: "webkit", use: { ...devices["Desktop Safari"] } },
+        ]
+      : []),
   ],
   // Tests run against the production build, not the dev server.
   webServer: {
