@@ -10,6 +10,7 @@ import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { Reveals } from "@/components/motion/Reveals";
 import { PinnedTracks } from "@/components/motion/PinnedTracks";
 import { ChapterObserver } from "@/components/motion/ChapterObserver";
+import { SceneLayer } from "@/components/scene/SceneLayer";
 import { motionBootScript } from "@/lib/motion";
 import "./globals.css";
 
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         <MotionProvider>
+          <SceneLayer />
           {children}
           <CursorLight />
           <SmoothScroll />
