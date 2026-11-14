@@ -198,3 +198,40 @@ test.describe("accessibility", () => {
     await expect(skip).toBeVisible();
   });
 });
+
+test.describe("particle hero", () => {
+  test("loads after the page, renders, and stops rendering once scrolled past", async ({ page }) => {
+    await page.goto("/");
+    // Text first: the heading is in the HTML before any 3D code downloads.
+    await expect(page.getByRole("heading", { level: 1 })).toBeAttached();
+    const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
+    const scene = page.getByTestId("hero-scene");
+    if (!webgl) {
+      await expect(scene).toHaveCount(0);
+      return;
+    }
+    await expect(scene).toBeAttached({ timeout: 10_000 });
+    const canvas = page.getByTestId("particle-canvas");
+    await expect(canvas).toHaveAttribute("data-frameloop", "always");
+    await page.locator("#carenexus-heading").scrollIntoViewIfNeeded();
+    await expect(canvas).toHaveAttribute("data-frameloop", "never");
+  });
+
+  test("draws a single still frame with motion off", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("switch", { name: "Motion" }).click();
+    const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
+    test.skip(!webgl, "no WebGL in this browser");
+    await expect(page.getByTestId("particle-canvas")).toHaveAttribute("data-frameloop", "demand", { timeout: 10_000 });
+  });
+
+  test("three.js is not in the first JavaScript the page loads", async ({ page }) => {
+    const early: string[] = [];
+    page.on("response", async (r) => {
+      if (r.url().endsWith(".js")) early.push(await r.text().catch(() => ""));
+    });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    const firstBatch = early.join("\n");
+    expect(firstBatch).not.toContain("WebGLRenderer");
+  });
+});
