@@ -160,3 +160,37 @@ html[data-cursor="on"] .light-text {
   -webkit-background-clip: text;
   background-clip: text;
 }
+
+/* ───────────── Motion (v0.4) ───────────── */
+html {
+  scroll-padding-top: 72px;
+}
+html[data-motion="off"] {
+  scroll-behavior: auto;
+}
+/* Lenis recommended styles */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Split headings stay hidden only until SplitText has run; a CSS fallback reveals them
+   after 2.5 s in case scripts fail, so text can never be lost. */
+html[data-motion="on"] [data-split]:not([data-split-ready]) {
+  visibility: hidden;
+  animation: reveal-fallback 0s 2.5s forwards;
+}
+@keyframes reveal-fallback {
+  to {
+    visibility: visible;
+  }
+}

@@ -5,6 +5,10 @@ import { GeistMono } from "geist/font/mono";
 import { color } from "@/lib/tokens";
 import { SITE_URL } from "@/lib/site";
 import { CursorLight } from "@/components/cursor/CursorLight";
+import { MotionProvider } from "@/components/motion/MotionProvider";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
+import { Reveals } from "@/components/motion/Reveals";
+import { motionBootScript } from "@/lib/motion";
 import "./globals.css";
 
 const instrumentSerif = localFont({
@@ -43,7 +47,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${GeistSans.variable} ${GeistMono.variable} ${instrumentSerif.variable}`}
+      // data-motion is set by the boot script before React hydrates.
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: motionBootScript }} />
+      </head>
       <body className="min-h-dvh bg-bg text-text">
         <a
           href="#main"
@@ -51,8 +60,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           Skip to content
         </a>
-        {children}
-        <CursorLight />
+        <MotionProvider>
+          {children}
+          <CursorLight />
+          <SmoothScroll />
+          <Reveals />
+        </MotionProvider>
       </body>
     </html>
   );
