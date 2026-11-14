@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+// The first-visit preloader is tested on its own; everywhere else, act like a returning visitor.
+test.beforeEach(async ({ page }, info) => {
+  if (!info.titlePath.some((t) => t.includes("preloader"))) {
+    await page.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
+  }
+});
+
 test("home loads with the right title, heading and no console errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
@@ -247,5 +254,54 @@ test.describe("particle hero", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const firstBatch = early.join("\n");
     expect(firstBatch).not.toContain("WebGLRenderer");
+  });
+});
+
+test.describe("preloader", () => {
+  test("plays on the first visit, gets out of the way, and is skipped on reload", async ({ page }) => {
+    await page.goto("/");
+    const pre = page.getByTestId("preloader");
+    await expect(pre).toBeVisible();
+    await expect(page.locator("html")).not.toHaveAttribute("data-preload", /.+/, { timeout: 5000 });
+    await expect(pre).toBeHidden();
+    // The page underneath is usable as soon as it lifts.
+    await page.getByRole("link", { name: "See the work" }).click();
+    await page.reload();
+    await expect(page.locator("html")).not.toHaveAttribute("data-preload", /.+/);
+    await expect(pre).toBeHidden();
+  });
+
+  test("never shows with motion off or without JavaScript", async ({ browser }) => {
+    for (const opts of [{ reducedMotion: "reduce" as const }, { javaScriptEnabled: false }]) {
+      const ctx = await browser.newContext(opts);
+      const page = await ctx.newPage();
+      await page.goto("/");
+      await expect(page.getByTestId("preloader")).toBeHidden();
+      await ctx.close();
+    }
+  });
+});
+
+test.describe("manifesto and magnetic buttons", () => {
+  test("the grind intro fills word by word as you scroll", async ({ page }) => {
+    await page.goto("/");
+    const p = page.locator("#grind [data-fill]");
+    await expect(p.locator(".fill-word").first()).toBeAttached();
+    const firstOpacity = () => p.locator(".fill-word").first().evaluate((el) => +getComputedStyle(el).opacity);
+    expect(await firstOpacity()).toBeLessThan(0.5);
+    await p.scrollIntoViewIfNeeded();
+    await page.mouse.wheel(0, 600);
+    await expect.poll(firstOpacity).toBeGreaterThan(0.8);
+  });
+
+  test("CTA leans toward a nearby mouse and springs back", async ({ page }) => {
+    await page.goto("/");
+    const cta = page.getByRole("link", { name: "See the work" });
+    const box = (await cta.boundingBox())!;
+    const tx = () => cta.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
+    await page.mouse.move(box.x + box.width + 20, box.y + box.height / 2, { steps: 5 });
+    await expect.poll(tx).toBeGreaterThan(5);
+    await page.mouse.move(10, 10, { steps: 5 });
+    await expect.poll(tx).toBeLessThan(1);
   });
 });
