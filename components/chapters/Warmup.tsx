@@ -2,6 +2,7 @@ import Image from "next/image";
 import { chapterById } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { Eyebrow } from "@/components/ui/SectionHeader";
+import { HeroScene } from "@/components/scene/HeroScene";
 
 export function Warmup() {
   const chapter = chapterById("warmup");
@@ -11,6 +12,7 @@ export function Warmup() {
       aria-labelledby="warmup-title"
       className="relative flex min-h-dvh items-end overflow-hidden px-6 pb-16 pt-28 md:items-center md:pb-0"
     >
+      <HeroScene />
       <Image
         src={profile.portrait.src}
         alt={profile.portrait.alt}
