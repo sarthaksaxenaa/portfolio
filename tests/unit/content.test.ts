@@ -66,9 +66,17 @@ describe("Projects", () => {
     expect(ok(Project, { ...rideshare, accent: "indigo" })).toBe(false);
   });
   it.each(projects.map((p) => [p.name, p.accent]))(
-    "%s accent is readable on the page background (≥ 4.5:1)",
+    "%s accent is readable as text on the background and every card surface (≥ 4.5:1)",
     (_, accent) => {
-      expect(contrastRatio(accent, color.bg)).toBeGreaterThanOrEqual(4.5);
+      for (const surface of [color.bg, color.surface1, color.surface2, color.surface3]) {
+        expect(contrastRatio(accent, surface)).toBeGreaterThanOrEqual(4.5);
+      }
+    },
+  );
+  it.each(projects.map((p) => [p.name, p.accent]))(
+    "%s accent works as a button background behind dark text (≥ 4.5:1)",
+    (_, accent) => {
+      expect(contrastRatio(color.bg, accent)).toBeGreaterThanOrEqual(4.5);
     },
   );
   it("never repeats the claims that cannot be backed", () => {
