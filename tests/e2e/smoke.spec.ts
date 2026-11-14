@@ -197,7 +197,9 @@ test.describe("accessibility", () => {
       await expect
         .poll(() =>
           page.evaluate(() =>
-            [...document.querySelectorAll("[data-reveal]")].every((el) => getComputedStyle(el).opacity === "1"),
+            [...document.querySelectorAll("[data-reveal], .fill-word")].every(
+              (el) => getComputedStyle(el).opacity === "1",
+            ),
           ),
         )
         .toBe(true);
