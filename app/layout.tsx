@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { color } from "@/lib/tokens";
 import { SITE_URL } from "@/lib/site";
+import { CursorLight } from "@/components/cursor/CursorLight";
 import "./globals.css";
 
 const instrumentSerif = localFont({
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           Skip to content
         </a>
         {children}
+        <CursorLight />
       </body>
     </html>
   );
