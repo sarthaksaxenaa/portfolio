@@ -12,6 +12,17 @@ test("home loads with the right title, heading and no console errors", async ({ 
   expect(errors).toEqual([]);
 });
 
+test("every stylesheet and script on the page loads", async ({ page }) => {
+  const failed: string[] = [];
+  page.on("response", (r) => {
+    if (/\.(css|js|woff2|webp)(\?|$)/.test(r.url()) && r.status() >= 400) failed.push(`${r.status()} ${r.url()}`);
+  });
+  await page.goto("/", { waitUntil: "networkidle" });
+  expect(failed).toEqual([]);
+  // Tailwind applied: the page background is the token, not the browser default.
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor)).toBe("rgb(5, 5, 6)");
+});
+
 test("nav links scroll to their chapters", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("navigation", { name: "Chapters" }).getByRole("link", { name: /CareNexus|Set 2/ }).click();
@@ -43,4 +54,34 @@ test("no horizontal overflow on a 360px phone", async ({ page }) => {
 test("unknown routes return 404", async ({ page }) => {
   const res = await page.goto("/this-page-does-not-exist");
   expect(res?.status()).toBe(404);
+});
+
+test.describe("cursor light", () => {
+  test("follows a mouse and lights the page", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-cursor", "on");
+    await page.mouse.move(400, 300);
+    await page.mouse.move(420, 320, { steps: 4 });
+    await expect(page.locator("html")).toHaveAttribute("data-cursor-visible", "true");
+    await expect
+      .poll(async () => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mx"))))
+      .toBeCloseTo(420, 0);
+  });
+
+  test("is absent with reduced motion", async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByTestId("cursor-light")).toHaveCount(0);
+    await expect(page.locator("html")).not.toHaveAttribute("data-cursor", "on");
+    await ctx.close();
+  });
+
+  test("is absent on a touch phone", async ({ browser }) => {
+    const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByTestId("cursor-light")).toHaveCount(0);
+    await ctx.close();
+  });
 });
