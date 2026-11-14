@@ -14,7 +14,7 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
       aria-labelledby={headingId}
       data-accent={project.accent}
       style={{ "--chapter-accent": project.accent } as CSSProperties}
-      className="px-6 py-32"
+      className="overflow-x-clip px-6 py-32"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-14">
         <SectionHeader chapter={chapter} id={headingId} />
@@ -25,15 +25,17 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
             <p className="text-muted">{lead}</p>
             <p className="text-muted">{project.problem}</p>
           </div>
-          <dl className="flex flex-col gap-4 text-sm">
-            <div>
-              <dt className="font-mono text-xs uppercase tracking-[0.08em] text-muted">Role</dt>
-              <dd>{project.role}</dd>
-            </div>
-            <div>
-              <dt className="font-mono text-xs uppercase tracking-[0.08em] text-muted">Stack</dt>
-              <dd>{project.stack.join(" · ")}</dd>
-            </div>
+          <div className="flex flex-col gap-4 text-sm">
+            <dl className="flex flex-col gap-4">
+              <div>
+                <dt className="font-mono text-xs uppercase tracking-[0.08em] text-muted">Role</dt>
+                <dd>{project.role}</dd>
+              </div>
+              <div>
+                <dt className="font-mono text-xs uppercase tracking-[0.08em] text-muted">Stack</dt>
+                <dd>{project.stack.join(" · ")}</dd>
+              </div>
+            </dl>
             <div className="flex flex-wrap gap-3 pt-2">
               {project.liveUrl && (
                 <a
@@ -51,7 +53,7 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
                 Source
               </a>
             </div>
-          </dl>
+          </div>
         </div>
 
         {project.stats.length > 0 && (
@@ -62,11 +64,11 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
           </div>
         )}
 
-        <div className="flex flex-col gap-6">
+        <div data-pin className="flex flex-col gap-6">
           <h3 className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
             Decisions, and what I said no to
           </h3>
-          <ol className="grid gap-6 lg:grid-cols-3">
+          <ol data-pin-track className="grid gap-6 lg:grid-cols-3">
             {project.decisions.map((d, i) => (
               <li
                 key={d.context}

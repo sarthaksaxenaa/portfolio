@@ -41,7 +41,7 @@ export const rideshare: ProjectT = Project.parse({
   honestNote: "No automated test suite yet. It is the next rep.",
   liveUrl: "https://rideshare-platform.vercel.app",
   repoUrl: "https://github.com/sarthaksaxenaa/RideShare-Platform",
-  accent: "#6366F1",
+  accent: "#818CF8",
 });
 
 export const carenexus: ProjectT = Project.parse({
