@@ -1,12 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
+import type { SplitText as SplitTextType } from "gsap/SplitText";
+import { loadGsap } from "@/lib/loadMotion";
 import { useMotion } from "./MotionProvider";
-
-gsap.registerPlugin(ScrollTrigger, SplitText);
 
 const EASE = "power4.out";
 
@@ -24,10 +21,10 @@ export function Reveals() {
     if (!enabled) return;
     let cancelled = false;
     let ctx: gsap.Context | undefined;
-    const splits: SplitText[] = [];
+    const splits: SplitTextType[] = [];
 
     // Split only after fonts load, or line breaks are measured with fallback metrics.
-    document.fonts.ready.then(() => {
+    Promise.all([loadGsap(), document.fonts.ready]).then(([{ gsap, ScrollTrigger, SplitText }]) => {
       if (cancelled) return;
       ctx = gsap.context(() => {
         gsap.utils.toArray<HTMLElement>("[data-split]").forEach((el) => {
@@ -43,14 +40,15 @@ export function Reveals() {
           });
         });
 
-        // Manifesto lines: words fill from dim to full as you scroll through them.
+        // Manifesto lines: words fill from dim to full as you scroll through them. They start at 50%,
+        // not lower, so text that has not been reached yet still meets WCAG contrast.
         gsap.utils.toArray<HTMLElement>("[data-fill]").forEach((el) => {
           // aria "none": words stay plain text for screen readers (aria-label is not allowed on a <p>).
           const split = SplitText.create(el, { type: "words", wordsClass: "fill-word", aria: "none" });
           splits.push(split);
           gsap.fromTo(
             split.words,
-            { opacity: 0.18 },
+            { opacity: 0.5 },
             {
               opacity: 1,
               ease: "none",
@@ -83,7 +81,9 @@ export function Reveals() {
         });
         // Elements below the fold start hidden; ones already on screen are revealed by batch on load.
         gsap.set(
-          gsap.utils.toArray<HTMLElement>("[data-reveal]").filter((el) => el.getBoundingClientRect().top > window.innerHeight),
+          gsap.utils
+            .toArray<HTMLElement>("[data-reveal]")
+            .filter((el) => el.getBoundingClientRect().top > window.innerHeight),
           { autoAlpha: 0, y: 28 },
         );
         ScrollTrigger.refresh();

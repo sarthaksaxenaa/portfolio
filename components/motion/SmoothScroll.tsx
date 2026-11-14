@@ -1,12 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import Lenis from "lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { loadGsap, loadLenis } from "@/lib/loadMotion";
 import { useMotion } from "./MotionProvider";
-
-gsap.registerPlugin(ScrollTrigger);
 
 export const NAV_OFFSET = -72;
 
@@ -20,23 +16,33 @@ export function SmoothScroll() {
 
   useEffect(() => {
     if (!enabled) return;
+    let teardown: (() => void) | undefined;
+    let cancelled = false;
 
-    const lenis = new Lenis({
-      lerp: 0.1,
-      anchors: { offset: NAV_OFFSET },
-      // Let nested scroll areas (code blocks, overflow panels) scroll natively.
-      prevent: (node) => node.closest?.("[data-lenis-prevent]") != null,
+    Promise.all([loadLenis(), loadGsap()]).then(([Lenis, { gsap, ScrollTrigger }]) => {
+      if (cancelled) return;
+      const lenis = new Lenis({
+        lerp: 0.1,
+        anchors: { offset: NAV_OFFSET },
+        // Let nested scroll areas (code blocks, overflow panels) scroll natively.
+        prevent: (node) => node.closest?.("[data-lenis-prevent]") != null,
+      });
+      const tick = (time: number) => lenis.raf(time * 1000);
+
+      lenis.on("scroll", ScrollTrigger.update);
+      gsap.ticker.add(tick);
+      gsap.ticker.lagSmoothing(0);
+
+      teardown = () => {
+        gsap.ticker.remove(tick);
+        gsap.ticker.lagSmoothing(500, 33);
+        lenis.destroy();
+      };
     });
-    const tick = (time: number) => lenis.raf(time * 1000);
-
-    lenis.on("scroll", ScrollTrigger.update);
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
 
     return () => {
-      gsap.ticker.remove(tick);
-      gsap.ticker.lagSmoothing(500, 33);
-      lenis.destroy();
+      cancelled = true;
+      teardown?.();
     };
   }, [enabled]);
 
