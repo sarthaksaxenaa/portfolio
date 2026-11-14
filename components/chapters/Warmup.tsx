@@ -24,6 +24,7 @@ export function Warmup() {
         <Eyebrow chapter={chapter} />
         <h1
           id="warmup-title"
+          data-split
           className="light-text font-display text-[clamp(3.25rem,11vw,10rem)] font-bold leading-[0.88] tracking-tight"
         >
           Sarthak

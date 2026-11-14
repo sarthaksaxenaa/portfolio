@@ -16,7 +16,7 @@ export function provenance(stat: Stat): string {
 
 export function StatTile({ stat }: { stat: Stat }) {
   return (
-    <figure className="flex flex-col gap-2 border-t border-hairline pt-4">
+    <figure data-reveal className="flex flex-col gap-2 border-t border-hairline pt-4">
       <span className="font-display text-[clamp(1.75rem,3.5vw,2.75rem)] font-bold leading-none tracking-tight">
         {stat.value}
       </span>

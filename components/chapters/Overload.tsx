@@ -19,7 +19,7 @@ export function Overload() {
         </p>
         <ol className="grid gap-6 md:grid-cols-3">
           {next.map((n, i) => (
-            <li key={n.title} className="flex flex-col gap-3 border-t border-hairline pt-5">
+            <li key={n.title} data-reveal className="flex flex-col gap-3 border-t border-hairline pt-5">
               <span className="font-mono text-xs text-muted">+{(i + 1) * 2.5} kg</span>
               <h3 className="text-xl font-semibold">{n.title}</h3>
               <p className="text-muted">{n.body}</p>

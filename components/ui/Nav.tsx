@@ -1,4 +1,5 @@
 import { chapters } from "@/content/chapters";
+import { MotionToggle } from "@/components/motion/MotionToggle";
 
 export function Nav() {
   return (
@@ -22,9 +23,12 @@ export function Nav() {
           </li>
         ))}
       </ol>
-      <a href="#cooldown" className="font-mono text-xs uppercase tracking-[0.08em] text-text md:hidden">
-        Contact
-      </a>
+      <div className="flex items-center gap-5">
+        <MotionToggle />
+        <a href="#cooldown" className="font-mono text-xs uppercase tracking-[0.08em] text-text md:hidden">
+          Contact
+        </a>
+      </div>
     </nav>
   );
 }
