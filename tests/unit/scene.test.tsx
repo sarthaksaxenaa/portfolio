@@ -12,10 +12,13 @@ describe("detectTier", () => {
     expect(detectTier({ webgl: true, cores: 2, memoryGb: 8 })).toBe("low");
     expect(detectTier({ webgl: true, cores: 8, memoryGb: 2 })).toBe("low");
   });
-  it("phones are capped at mid", () => {
-    expect(detectTier({ webgl: true, cores: 8, memoryGb: 8, coarsePointer: true })).toBe("mid");
-    expect(detectTier({ webgl: true, cores: 4, memoryGb: 4, coarsePointer: true })).toBe("low");
-    expect(detectTier({ webgl: true, cores: 12, memoryGb: 16, viewportWidth: 390 })).toBe("mid");
+  it("phones and narrow screens get no particles, however powerful", () => {
+    expect(detectTier({ webgl: true, cores: 12, memoryGb: 16, coarsePointer: true })).toBe("none");
+    expect(detectTier({ webgl: true, cores: 12, memoryGb: 16, viewportWidth: 390 })).toBe("none");
+    expect(detectTier({ webgl: true, cores: 12, memoryGb: 16, viewportWidth: 768 })).toBe("high");
+    // Regression: weak phones were caught by the weak-hardware rule first and got "low".
+    expect(detectTier({ webgl: true, cores: 2, memoryGb: 2, coarsePointer: true })).toBe("none");
+    expect(detectTier({ webgl: true, cores: 4, memoryGb: 2, viewportWidth: 412 })).toBe("none");
   });
   it("strong desktops → high, ordinary ones → mid", () => {
     expect(detectTier({ webgl: true, cores: 8, memoryGb: 8, viewportWidth: 1440 })).toBe("high");

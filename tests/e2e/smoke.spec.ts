@@ -238,6 +238,20 @@ test.describe("particle hero", () => {
     expect(await layer.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
   });
 
+  test("phones never download three.js", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 412, height: 823 }, isMobile: true, hasTouch: true });
+    const page = await ctx.newPage();
+    const three: string[] = [];
+    page.on("response", async (r) => {
+      if (r.url().endsWith(".js") && (await r.text().catch(() => "")).includes("WebGLRenderer")) three.push(r.url());
+    });
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.waitForTimeout(2500); // past load + idle, when desktops would start the scene
+    expect(three).toEqual([]);
+    await expect(page.getByTestId("scene-layer")).toHaveCount(0);
+    await ctx.close();
+  });
+
   test("draws a single still frame with motion off", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("switch", { name: "Motion" }).click();
@@ -288,7 +302,7 @@ test.describe("manifesto and magnetic buttons", () => {
     const p = page.locator("#grind [data-fill]");
     await expect(p.locator(".fill-word").first()).toBeAttached();
     const firstOpacity = () => p.locator(".fill-word").first().evaluate((el) => +getComputedStyle(el).opacity);
-    expect(await firstOpacity()).toBeLessThan(0.5);
+    expect(await firstOpacity()).toBeLessThanOrEqual(0.55); // dimmed, but still WCAG-readable
     await p.scrollIntoViewIfNeeded();
     await page.mouse.wheel(0, 600);
     await expect.poll(firstOpacity).toBeGreaterThan(0.8);
@@ -303,5 +317,22 @@ test.describe("manifesto and magnetic buttons", () => {
     await expect.poll(tx).toBeGreaterThan(5);
     await page.mouse.move(10, 10, { steps: 5 });
     await expect.poll(tx).toBeLessThan(1);
+  });
+});
+
+test.describe("sharing and search", () => {
+  test("Open Graph image, sitemap and robots are served", async ({ request, page }) => {
+    const og = await request.get("/opengraph-image");
+    expect(og.status()).toBe(200);
+    expect(og.headers()["content-type"]).toContain("image/png");
+    expect((await og.body()).length).toBeGreaterThan(10_000);
+
+    await page.goto("/");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /^https:\/\/sarthxen\.vercel\.app\/opengraph-image/);
+
+    const sitemap = await (await request.get("/sitemap.xml")).text();
+    expect(sitemap).toContain("<loc>https://sarthxen.vercel.app</loc>");
+    const robots = await (await request.get("/robots.txt")).text();
+    expect(robots).toContain("Sitemap: https://sarthxen.vercel.app/sitemap.xml");
   });
 });
