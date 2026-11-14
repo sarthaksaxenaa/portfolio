@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DPR_CAP, PARTICLES, detectTier, hasWebGL } from "@/lib/deviceTier";
 import { fibonacciSphere, seeds } from "@/lib/sphere";
@@ -85,10 +85,10 @@ describe("seeds", () => {
   });
 });
 
-// HeroScene: WebGL cannot run in jsdom, so the heavy module is replaced with a probe.
-vi.mock("@/components/scene/ParticleSphere", () => ({
-  default: (props: { count: number; animate: boolean; active: boolean }) => (
-    <div data-testid="sphere-probe" data-count={props.count} data-animate={String(props.animate)} data-active={String(props.active)} />
+// SceneLayer: WebGL cannot run in jsdom, so the heavy module is replaced with a probe.
+vi.mock("@/components/scene/ParticleField", () => ({
+  default: (props: { count: number; animate: boolean }) => (
+    <div data-testid="sphere-probe" data-count={props.count} data-animate={String(props.animate)} />
   ),
 }));
 vi.mock("next/dynamic", async () => {
@@ -107,32 +107,20 @@ vi.mock("next/dynamic", async () => {
   };
 });
 
-describe("HeroScene", () => {
-  let io: { cb: IntersectionObserverCallback } | null = null;
+describe("SceneLayer", () => {
   beforeEach(() => {
     vi.stubGlobal("requestIdleCallback", (cb: () => void) => {
       cb();
       return 1;
     });
-    vi.stubGlobal(
-      "IntersectionObserver",
-      class {
-        constructor(cb: IntersectionObserverCallback) {
-          io = { cb };
-        }
-        observe() {}
-        disconnect() {}
-      },
-    );
     vi.stubGlobal("matchMedia", (q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }));
   });
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    io = null;
   });
 
-  const load = async () => (await import("@/components/scene/HeroScene")).HeroScene;
+  const load = async () => (await import("@/components/scene/SceneLayer")).SceneLayer;
   const withMotion = async (ui: React.ReactNode) => {
     const { MotionProvider } = await import("@/components/motion/MotionProvider");
     return render(<MotionProvider>{ui}</MotionProvider>);
@@ -140,36 +128,23 @@ describe("HeroScene", () => {
 
   it("renders nothing without WebGL", async () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
-    const HeroScene = await load();
-    await withMotion(<HeroScene />);
-    expect(screen.queryByTestId("hero-scene")).toBeNull();
+    const SceneLayer = await load();
+    await withMotion(<SceneLayer />);
+    expect(screen.queryByTestId("scene-layer")).toBeNull();
   });
 
   it("mounts the sphere with the tier's particle budget when WebGL exists", async () => {
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as RenderingContext);
-    const HeroScene = await load();
+    const SceneLayer = await load();
     await withMotion(
       <section id="warmup">
-        <HeroScene />
+        <SceneLayer />
       </section>,
     );
-    const scene = await screen.findByTestId("hero-scene");
+    const scene = await screen.findByTestId("scene-layer");
     const tier = scene.getAttribute("data-tier") as keyof typeof PARTICLES;
     expect(await screen.findByTestId("sphere-probe")).toHaveAttribute("data-count", String(PARTICLES[tier]));
     expect(scene).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("stops rendering when the hero leaves the viewport", async () => {
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as RenderingContext);
-    const HeroScene = await load();
-    await withMotion(
-      <section id="warmup">
-        <HeroScene />
-      </section>,
-    );
-    await screen.findByTestId("sphere-probe");
-    act(() => io!.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as IntersectionObserver));
-    expect(screen.getByTestId("sphere-probe")).toHaveAttribute("data-active", "false");
   });
 
   it("draws a still frame instead of animating when motion is off", async () => {
@@ -180,10 +155,10 @@ describe("HeroScene", () => {
       removeEventListener() {},
     }));
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({} as RenderingContext);
-    const HeroScene = await load();
+    const SceneLayer = await load();
     await withMotion(
       <section id="warmup">
-        <HeroScene />
+        <SceneLayer />
       </section>,
     );
     expect(await screen.findByTestId("sphere-probe")).toHaveAttribute("data-animate", "false");

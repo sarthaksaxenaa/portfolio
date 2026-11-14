@@ -72,6 +72,19 @@ describe("ChapterObserver", () => {
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
 
+  it("announces each chapter change once, for the particle scene", async () => {
+    vi.stubGlobal("scrollY", 0);
+    const seen: string[] = [];
+    const on = (e: Event) => seen.push((e as CustomEvent<string>).detail);
+    window.addEventListener("chapterchange", on);
+    render(<Page />);
+    await scrollTo(2 * H);
+    await scrollTo(2 * H + 100); // same chapter: no duplicate event
+    await scrollTo(3 * H);
+    window.removeEventListener("chapterchange", on);
+    expect(seen).toEqual(["warmup", "rideshare", "carenexus"]);
+  });
+
   it("only one link is ever current", async () => {
     vi.stubGlobal("scrollY", 0);
     render(<Page />);
