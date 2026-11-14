@@ -1,6 +1,14 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CursorLight } from "@/components/cursor/CursorLight";
+import { MotionProvider } from "@/components/motion/MotionProvider";
+import { MotionToggle } from "@/components/motion/MotionToggle";
+
+const Light = () => (
+  <MotionProvider>
+    <CursorLight />
+  </MotionProvider>
+);
 
 type Media = Record<string, boolean>;
 
@@ -53,27 +61,27 @@ const move = (x: number, y: number, pointerType = "mouse") =>
 describe("CursorLight", () => {
   it("renders nothing on touch devices", () => {
     mockMedia({ "(pointer: fine)": false });
-    render(<CursorLight />);
+    render(<Light />);
     expect(screen.queryByTestId("cursor-light")).toBeNull();
     expect(root().hasAttribute("data-cursor")).toBe(false);
   });
 
   it("renders nothing when the user prefers reduced motion", () => {
     mockMedia({ "(pointer: fine)": true, "(prefers-reduced-motion: reduce)": true });
-    render(<CursorLight />);
+    render(<Light />);
     expect(screen.queryByTestId("cursor-light")).toBeNull();
   });
 
   it("renders decorative layers, hidden from assistive tech, for a mouse", () => {
     mockMedia({ "(pointer: fine)": true });
-    render(<CursorLight />);
+    render(<Light />);
     expect(screen.getByTestId("cursor-light")).toHaveAttribute("aria-hidden", "true");
     expect(root().getAttribute("data-cursor")).toBe("on");
   });
 
   it("starts at the pointer on the first move, then follows it", () => {
     mockMedia({ "(pointer: fine)": true });
-    render(<CursorLight />);
+    render(<Light />);
     move(200, 150);
     flush();
     expect(root().style.getPropertyValue("--mx")).toBe("200.0px");
@@ -88,7 +96,7 @@ describe("CursorLight", () => {
 
   it("stops the animation loop once the light has caught up", () => {
     mockMedia({ "(pointer: fine)": true });
-    render(<CursorLight />);
+    render(<Light />);
     move(300, 300);
     flush(200);
     expect(frames).toHaveLength(0);
@@ -96,7 +104,7 @@ describe("CursorLight", () => {
 
   it("ignores touch pointer events even on a hybrid device", () => {
     mockMedia({ "(pointer: fine)": true });
-    render(<CursorLight />);
+    render(<Light />);
     move(50, 50, "touch");
     flush();
     expect(root().getAttribute("data-cursor-visible")).not.toBe("true");
@@ -104,7 +112,7 @@ describe("CursorLight", () => {
 
   it("fades out when the pointer leaves the window", () => {
     mockMedia({ "(pointer: fine)": true });
-    render(<CursorLight />);
+    render(<Light />);
     move(10, 10);
     act(() => {
       document.dispatchEvent(new MouseEvent("mouseout", { relatedTarget: null }));
@@ -117,7 +125,7 @@ describe("CursorLight", () => {
     render(
       <>
         <a href="#x">link</a>
-        <CursorLight />
+        <Light />
       </>,
     );
     act(() => {
@@ -128,9 +136,24 @@ describe("CursorLight", () => {
     expect(root().hasAttribute("data-cursor-hover")).toBe(true);
   });
 
+  it("turns off when the visitor switches motion off, and back on", () => {
+    mockMedia({ "(pointer: fine)": true });
+    render(
+      <MotionProvider>
+        <MotionToggle />
+        <CursorLight />
+      </MotionProvider>,
+    );
+    expect(screen.getByTestId("cursor-light")).toBeInTheDocument();
+    act(() => screen.getByRole("switch", { name: "Motion" }).click());
+    expect(screen.queryByTestId("cursor-light")).toBeNull();
+    act(() => screen.getByRole("switch", { name: "Motion" }).click());
+    expect(screen.getByTestId("cursor-light")).toBeInTheDocument();
+  });
+
   it("turns off live when reduced motion is switched on", () => {
     const media = mockMedia({ "(pointer: fine)": true });
-    render(<CursorLight />);
+    render(<Light />);
     expect(screen.getByTestId("cursor-light")).toBeInTheDocument();
     act(() => media.set("(prefers-reduced-motion: reduce)", true));
     expect(screen.queryByTestId("cursor-light")).toBeNull();
@@ -140,7 +163,7 @@ describe("CursorLight", () => {
   it("cleans up listeners, attributes and variables on unmount", () => {
     const media = mockMedia({ "(pointer: fine)": true });
     const remove = vi.spyOn(window, "removeEventListener");
-    const { unmount } = render(<CursorLight />);
+    const { unmount } = render(<Light />);
     move(100, 100);
     flush();
     unmount();
