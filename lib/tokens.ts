@@ -56,3 +56,11 @@ export function contrastRatio(a: string, b: string): number {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 }
+
+/** "#6366F1" → "99 102 241", the space-separated form CSS rgb() accepts with an alpha. */
+export function hexToRgbTriplet(hex: string): string {
+  const m = HEX.exec(hex);
+  if (!m) throw new Error(`Expected a 6-digit hex colour, got "${hex}"`);
+  const n = parseInt(m[1], 16);
+  return `${(n >> 16) & 0xff} ${(n >> 8) & 0xff} ${n & 0xff}`;
+}
