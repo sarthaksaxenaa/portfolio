@@ -194,3 +194,39 @@ html[data-motion="on"] [data-split]:not([data-split-ready]) {
     visibility: visible;
   }
 }
+
+/* ───────────── Case studies (v0.5) ───────────── */
+
+/* The cursor light takes the colour of the case study you are in (ChapterObserver sets --glow). */
+.cursor-glow {
+  background: radial-gradient(circle, rgb(var(--glow, 255 255 255) / 0.09) 0%, transparent 62%);
+}
+.cursor-dots {
+  background-image: radial-gradient(rgb(var(--glow, 255 255 255) / 0.28) 1px, transparent 1.5px);
+}
+
+/* Active chapter in the nav. */
+nav a[aria-current="location"] {
+  color: var(--color-text);
+}
+
+/* Horizontal decision track: only while PinnedTracks has pinned it. */
+.is-pinned [data-pin-track] {
+  display: flex;
+  gap: 1.5rem;
+  width: max-content;
+  will-change: transform;
+}
+.is-pinned [data-pin-track] > li {
+  flex: none;
+  width: min(34rem, 42vw);
+}
+/* Inside the moving track the light uses card-local coordinates. */
+html[data-cursor="on"] .is-pinned .light-card::before {
+  background-attachment: scroll;
+  background-image: radial-gradient(circle 260px at var(--lx, -999px) var(--ly, -999px), rgb(255 255 255 / 0.6), transparent 70%);
+}
+html[data-cursor="on"] .is-pinned .light-card::after {
+  background-attachment: scroll;
+  background-image: radial-gradient(circle 320px at var(--lx, -999px) var(--ly, -999px), rgb(255 255 255 / 0.045), transparent 70%);
+}

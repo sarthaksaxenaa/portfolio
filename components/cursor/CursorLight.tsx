@@ -95,6 +95,14 @@ export function CursorLight() {
         glow.y = ring.y = target.y;
       }
       setVisible(true);
+      // Cards inside a transformed (pinned) track cannot use the fixed-attachment light,
+      // so they get local coordinates instead.
+      const card = e.target instanceof Element ? e.target.closest<HTMLElement>(".is-pinned .light-card") : null;
+      if (card) {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty("--lx", `${e.clientX - r.left}px`);
+        card.style.setProperty("--ly", `${e.clientY - r.top}px`);
+      }
       const hovering = e.target instanceof Element && e.target.closest(INTERACTIVE);
       root.toggleAttribute("data-cursor-hover", Boolean(hovering));
       wake();

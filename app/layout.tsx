@@ -8,6 +8,8 @@ import { CursorLight } from "@/components/cursor/CursorLight";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { Reveals } from "@/components/motion/Reveals";
+import { PinnedTracks } from "@/components/motion/PinnedTracks";
+import { ChapterObserver } from "@/components/motion/ChapterObserver";
 import { motionBootScript } from "@/lib/motion";
 import "./globals.css";
 
@@ -65,6 +67,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <CursorLight />
           <SmoothScroll />
           <Reveals />
+          <PinnedTracks />
+          <ChapterObserver />
         </MotionProvider>
       </body>
     </html>
