@@ -85,3 +85,45 @@ test.describe("cursor light", () => {
     await ctx.close();
   });
 });
+
+test.describe("motion", () => {
+  test("smooth scroll is on by default and headings reveal when scrolled to", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "on");
+    await expect(page.locator("html")).toHaveClass(/lenis/);
+    const heading = page.locator("#overload-heading");
+    await heading.scrollIntoViewIfNeeded();
+    await expect(heading).toHaveAttribute("data-split-ready", "");
+    await expect(heading).toBeVisible();
+  });
+
+  test("MOTION OFF persists across reloads and disables smooth scroll and the cursor light", async ({ page }) => {
+    await page.goto("/");
+    const sw = page.getByRole("switch", { name: "Motion" });
+    await sw.click();
+    await expect(sw).toHaveAttribute("aria-checked", "false");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
+    await expect(page.locator("html")).not.toHaveClass(/lenis/);
+    await expect(page.getByTestId("cursor-light")).toHaveCount(0);
+    await expect(page.locator("#overload-heading")).not.toHaveAttribute("data-split-ready", "");
+  });
+
+  test("reduced-motion visitors start with motion off", async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
+    await expect(page.getByRole("switch", { name: "Motion" })).toHaveAttribute("aria-checked", "false");
+    await ctx.close();
+  });
+
+  test("all text is readable with JavaScript disabled", async ({ browser }) => {
+    const ctx = await browser.newContext({ javaScriptEnabled: false });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.locator("#carenexus-heading")).toBeVisible();
+    await ctx.close();
+  });
+});
