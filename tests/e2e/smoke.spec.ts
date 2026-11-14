@@ -58,6 +58,16 @@ test("unknown routes return 404", async ({ page }) => {
 });
 
 test.describe("cursor light", () => {
+  test("headings are visible before the mouse has ever moved", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator("html")).toHaveAttribute("data-cursor", "on");
+    // light-text paints glyphs with a gradient; if the gradient is invalid the text is transparent.
+    for (const sel of ["#warmup-title", "#grind-heading", "#cooldown a.light-text"]) {
+      const bg = await page.locator(sel).evaluate((el) => getComputedStyle(el).backgroundImage);
+      expect(bg, sel).toContain("gradient");
+    }
+  });
+
   test("follows a mouse and lights the page", async ({ page }) => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-cursor", "on");
@@ -200,21 +210,25 @@ test.describe("accessibility", () => {
 });
 
 test.describe("particle hero", () => {
-  test("loads after the page, renders, and stops rendering once scrolled past", async ({ page }) => {
+  test("loads after the page and stays behind every chapter as it morphs", async ({ page }) => {
     await page.goto("/");
     // Text first: the heading is in the HTML before any 3D code downloads.
     await expect(page.getByRole("heading", { level: 1 })).toBeAttached();
     const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
-    const scene = page.getByTestId("hero-scene");
+    const layer = page.getByTestId("scene-layer");
     if (!webgl) {
-      await expect(scene).toHaveCount(0);
+      await expect(layer).toHaveCount(0);
       return;
     }
-    await expect(scene).toBeAttached({ timeout: 10_000 });
+    await expect(layer).toBeAttached({ timeout: 10_000 });
     const canvas = page.getByTestId("particle-canvas");
     await expect(canvas).toHaveAttribute("data-frameloop", "always");
     await page.locator("#carenexus-heading").scrollIntoViewIfNeeded();
-    await expect(canvas).toHaveAttribute("data-frameloop", "never");
+    await page.mouse.wheel(0, 200);
+    await expect(page.locator("html")).toHaveAttribute("data-chapter", "carenexus");
+    await expect(canvas).toBeAttached();
+    // The fixed layer never blocks clicks on the page.
+    expect(await layer.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
   });
 
   test("draws a single still frame with motion off", async ({ page }) => {
