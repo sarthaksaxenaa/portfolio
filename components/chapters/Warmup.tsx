@@ -25,12 +25,15 @@ export function Warmup() {
         <Eyebrow chapter={chapter} />
         <h1
           id="warmup-title"
-          data-split
           className="light-text font-display text-[clamp(3.25rem,11vw,10rem)] font-bold leading-[0.88] tracking-tight"
         >
-          Sarthak
-          <br />
-          Saxena
+          {/* Pure-CSS line reveal: runs on first paint, no JavaScript, so it never delays LCP. */}
+          <span className="hero-line">
+            <span>Sarthak</span>
+          </span>
+          <span className="hero-line">
+            <span>Saxena</span>
+          </span>
         </h1>
         <p className="max-w-xl text-lg text-muted md:text-xl">
           Sure enough to <em className="font-serif text-[1.15em] text-text">burn the ships.</em>

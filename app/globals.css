@@ -283,3 +283,26 @@ html[data-preload="on"] {
   display: inline-block;
   will-change: transform;
 }
+
+/* ───────────── Hardening (v0.9) ───────────── */
+
+/* Hero name: CSS-only line reveal. Starts on first paint, or when the preloader lifts. */
+.hero-line {
+  display: block;
+  overflow: clip;
+  padding-bottom: 0.06em; /* room for descenders inside the mask */
+}
+.hero-line > span {
+  display: block;
+}
+html[data-motion="on"]:not([data-preload="on"]) .hero-line > span {
+  animation: hero-rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+html[data-motion="on"]:not([data-preload="on"]) .hero-line:nth-child(2) > span {
+  animation-delay: 0.08s;
+}
+@keyframes hero-rise {
+  from {
+    transform: translateY(105%);
+  }
+}
