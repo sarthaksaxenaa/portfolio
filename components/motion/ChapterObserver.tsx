@@ -30,7 +30,10 @@ export function ChapterObserver() {
     const apply = (id: string | null) => {
       if (id === current) return;
       current = id;
-      if (id) root.setAttribute("data-chapter", id);
+      if (id) {
+        root.setAttribute("data-chapter", id);
+        window.dispatchEvent(new CustomEvent("chapterchange", { detail: id }));
+      }
       const glow = id ? accentByChapter[id] : undefined;
       if (glow) root.style.setProperty("--glow", glow);
       else root.style.removeProperty("--glow");
