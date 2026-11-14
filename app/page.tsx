@@ -1,20 +1,32 @@
+import { Nav } from "@/components/ui/Nav";
+import { Warmup } from "@/components/chapters/Warmup";
+import { Grind } from "@/components/chapters/Grind";
+import { ProjectChapter } from "@/components/chapters/ProjectChapter";
+import { Overload } from "@/components/chapters/Overload";
+import { Cooldown } from "@/components/chapters/Cooldown";
+import { chapterById } from "@/content/chapters";
+import { carenexus, rideshare } from "@/content/projects";
+
 export default function Home() {
   return (
-    <main
-      id="main"
-      className="mx-auto flex min-h-dvh max-w-6xl flex-col justify-center gap-8 px-6"
-    >
-      <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
-        00 / Warm-up
-      </p>
-      <h1 className="font-display text-[clamp(3rem,10vw,9rem)] font-bold leading-[0.9] tracking-tight">
-        Sarthak Saxena
-      </h1>
-      <p className="max-w-2xl text-lg text-muted">
-        Sure enough to{" "}
-        <em className="font-serif text-text">burn the ships.</em>
-      </p>
-      <p className="font-mono text-xs text-muted">v0.1 · under construction</p>
-    </main>
+    <>
+      <Nav />
+      <main id="main">
+        <Warmup />
+        <Grind />
+        <ProjectChapter
+          chapter={chapterById("rideshare")}
+          project={rideshare}
+          lead="The first set with real weight: money, concurrency and live location, all at once."
+        />
+        <ProjectChapter
+          chapter={chapterById("carenexus")}
+          project={carenexus}
+          lead="The turning point. I found my own retriever matching the wrong words, fixed the cause, and stopped trusting any number I had not measured."
+        />
+        <Overload />
+        <Cooldown />
+      </main>
+    </>
   );
 }
