@@ -52,35 +52,68 @@ uniform float uSize;
 uniform float uPixelRatio;
 uniform vec2  uMouse;      // pointer in NDC (-1..1), far away when unknown
 uniform float uMouseForce; // 0..1, eased in and out
+uniform float uMorph;      // 0 sphere, 1 grid, 2 roads, 3 body, 4 field (fractions blend)
+uniform float uRot;        // sphere spin, radians
+uniform vec4  uSphere;     // xy centre, z radius (world units)
+uniform vec4  uRight;      // placement for roads and body: xy centre, z scale
+uniform vec4  uFull;       // placement for grid and field: xy centre, z half-width, w half-height
 attribute float aSeed;
+attribute vec3  aGrid;
+attribute vec3  aRoad;
+attribute float aAlong;
+attribute vec3  aBody;
+attribute vec3  aField;
 varying float vAlpha;
 
 ${simplex3d}
 
-void main() {
-  vec3 n = normalize(position);
+vec3 rotY(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(c*v.x + s*v.z, v.y, -s*v.x + c*v.z); }
 
-  // Flowing contour bands: low-frequency noise drifts across the surface over time.
+void main() {
+  float wSphere = 1.0 - clamp(uMorph, 0.0, 1.0);
+  float wRoad   = clamp(uMorph - 1.0, 0.0, 1.0) * (1.0 - clamp(uMorph - 2.0, 0.0, 1.0));
+  float wField  = clamp(uMorph - 3.0, 0.0, 1.0);
+
+  // Sphere: noise-driven contour bands, spinning, centred on the portrait.
+  vec3 n = normalize(position);
   float flow = snoise(n * 1.6 + vec3(0.0, uTime * 0.12, uTime * 0.05));
   float ripple = snoise(n * 4.0 + uTime * 0.25) * 0.25;
-  vec3 p = n * (1.0 + 0.12 * flow + 0.03 * ripple);
+  vec3 sp = rotY(n * (1.0 + 0.12 * flow + 0.03 * ripple), uRot);
+  vec3 tSphere = vec3(uSphere.xy, 0.0) + sp * uSphere.z;
+
+  // Flat shapes breathe a little so they never look frozen.
+  float breathe = snoise(vec3(aSeed * 10.0, uTime * 0.2, 0.0)) * 0.012;
+  vec3 tGrid  = vec3(uFull.xy, 0.0) + vec3(aGrid.x * uFull.z, aGrid.y * uFull.w, aGrid.z) + breathe;
+  vec3 tRoad  = vec3(uRight.xy, 0.0) + aRoad * uRight.z;
+  vec3 tBody  = vec3(uRight.xy, 0.0) + aBody * uRight.z + breathe;
+  // The field drifts upward and wraps: weight coming off the bar.
+  vec3 f = aField;
+  f.y = mod(f.y + 1.0 + uTime * 0.03 * (0.5 + aSeed), 2.0) - 1.0;
+  vec3 tField = vec3(uFull.xy, 0.0) + vec3(f.x * uFull.z, f.y * uFull.w, f.z);
+
+  vec3 p = tSphere;
+  p = mix(p, tGrid,  clamp(uMorph, 0.0, 1.0));
+  p = mix(p, tRoad,  clamp(uMorph - 1.0, 0.0, 1.0));
+  p = mix(p, tBody,  clamp(uMorph - 2.0, 0.0, 1.0));
+  p = mix(p, tField, clamp(uMorph - 3.0, 0.0, 1.0));
+
+  // Pointer repulsion in screen space.
+  vec4 clip = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  float d = distance(clip.xy / clip.w, uMouse);
+  float push = smoothstep(0.42, 0.0, d) * uMouseForce;
+  vec3 away = mix(normalize(vec3(clip.xy / clip.w - uMouse, 0.0) + 1e-5), sp, wSphere);
+  p += away * push * 0.3;
 
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
-  vec4 clip = projectionMatrix * mv;
-
-  // Pointer repulsion in screen space: points near the cursor are pushed outward along their normal.
-  vec2 ndc = clip.xy / clip.w;
-  float d = distance(ndc, uMouse);
-  float push = smoothstep(0.42, 0.0, d) * uMouseForce;
-  p += n * push * 0.35;
-  mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
 
-  // Front-facing points read brighter; banding from the flow field gives the contour look.
-  vec3 viewN = normalize(normalMatrix * n);
-  float facing = clamp(viewN.z * 0.5 + 0.5, 0.0, 1.0);
+  // Sphere shading: front-facing and banded. Flat shapes: even, with road pulses like traffic.
+  float facing = clamp(sp.z * 0.5 + 0.5, 0.0, 1.0);
   float band = smoothstep(0.15, 0.6, abs(fract(flow * 2.5) - 0.5) * 2.0);
-  vAlpha = (0.08 + 0.75 * facing * facing) * (0.45 + 0.55 * band) * (0.7 + 0.3 * aSeed) + push * 0.6;
+  float sphereA = (0.08 + 0.75 * facing * facing) * (0.45 + 0.55 * band);
+  float pulse = smoothstep(0.92, 1.0, fract(aAlong * 3.0 - uTime * 0.35 + aSeed * 0.15));
+  float flatA = 0.55 + wRoad * pulse * 1.6 - wField * 0.15;
+  vAlpha = mix(flatA, sphereA, wSphere) * (0.7 + 0.3 * aSeed) + push * 0.6;
 
   gl_PointSize = uSize * uPixelRatio * (0.6 + 0.6 * aSeed) * (1.0 / -mv.z);
 }
