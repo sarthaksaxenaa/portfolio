@@ -86,9 +86,9 @@ test.describe("cursor light", () => {
       const bg = await page.locator(sel).evaluate((el) => getComputedStyle(el).backgroundImage);
       expect(bg, sel).toContain("gradient");
     }
-    // The forged name draws its glyphs in ::before; they must have a real colour.
-    const glyph = await page.locator("[data-forge-ch]").first().evaluate((el) => getComputedStyle(el, "::before").color);
-    expect(glyph).not.toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
+    // The name paints its fill as a gradient clipped to the text.
+    const fill = await page.locator(".hero-name-line").first().evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(fill).toContain("gradient");
   });
 
   test("follows a mouse and lights the page", async ({ page }) => {
@@ -269,65 +269,43 @@ test.describe("accessibility", () => {
   });
 });
 
-test.describe("forged name", () => {
-  const heats = (page: import("@playwright/test").Page) =>
-    page.locator("[data-forge-ch]").evaluateAll((els) => els.map((e) => Number(e.style.getPropertyValue("--heat") || 0)));
-  const layout = (page: import("@playwright/test").Page) =>
-    page
-      .locator("[data-forge-ch]")
-      .evaluateAll((els) => (els as HTMLElement[]).map((e) => [e.offsetLeft, e.offsetTop, e.offsetWidth].join()).join("|"));
+test.describe("hero name", () => {
+  const progress = (page: import("@playwright/test").Page) =>
+    page.locator("#warmup-title").evaluate((el) => Number(getComputedStyle(el).getPropertyValue("--name-p")));
 
-  test("a mouse heats the letters under it, heavier and lifted, without moving the layout", async ({ page }) => {
+  test("loads 00 → 100 like the intro, then the counter fades and the name stays solid", async ({ page }) => {
     await page.goto("/");
-    await page.waitForTimeout(2000); // entrance finished
-    const before = await layout(page);
-    const box = (await page.locator("[data-forge-ch]").nth(3).boundingBox())!;
+    const count = page.getByTestId("name-count");
+    await expect.poll(() => progress(page)).toBeGreaterThan(5);
+    const mid = await progress(page);
+    expect(mid).toBeLessThan(100);
+    expect(await count.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0.5);
+    await expect.poll(() => progress(page), { timeout: 5000 }).toBe(100);
+    await expect.poll(() => count.evaluate((el) => getComputedStyle(el).opacity), { timeout: 3000 }).toBe("0");
+    // Fully loaded: the outline layer is masked away across the whole word.
+    const mask = await page
+      .locator('.hero-name-line[data-line="1"]')
+      .evaluate((el) => getComputedStyle(el, "::before").maskImage || getComputedStyle(el, "::before").webkitMaskImage);
+    expect(mask).toMatch(/100%/);
+  });
+
+  test("no torch: moving the mouse over the name changes nothing", async ({ page }) => {
+    await page.goto("/");
+    await expect.poll(() => progress(page), { timeout: 5000 }).toBe(100);
+    const line = page.locator('.hero-name-line[data-line="0"]');
+    const before = await line.evaluate((el) => getComputedStyle(el).backgroundImage);
+    const box = (await line.boundingBox())!;
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 6 });
-    await expect.poll(async () => (await heats(page))[3]).toBeGreaterThan(0.8);
-    const wght = await page
-      .locator("[data-forge-ch]")
-      .nth(3)
-      .evaluate((el) => parseFloat(getComputedStyle(el, "::before").fontVariationSettings.split(" ")[1]));
-    expect(wght).toBeGreaterThan(850);
-    expect((await heats(page))[12]).toBeLessThan(0.2); // the far end stays cool
-    await expect(page.locator("[data-forge-stage]")).toHaveAttribute("style", /rotateY/);
-    expect(await layout(page)).toBe(before); // weight swings never shift the page
-    await page.mouse.move(1400, 890, { steps: 4 });
-    await page.mouse.move(-1, -1);
-    await expect.poll(async () => Math.max(...(await heats(page)))).toBeLessThan(0.05);
+    await page.waitForTimeout(300);
+    expect(await line.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe(before);
   });
 
-  test("on a phone a heat wave crosses the name on its own, and a finger heats a letter", async ({ browser }) => {
-    const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
-    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
-    const page = await ctx.newPage();
-    await page.goto("/");
-    await expect.poll(async () => Math.max(...(await heats(page))), { timeout: 8000 }).toBeGreaterThan(0.4);
-    await expect.poll(async () => Math.max(...(await heats(page))), { timeout: 6000 }).toBeLessThan(0.05);
-    // Record the hottest the tapped letter gets: a quick tap should still leave a heat pulse.
-    await page.locator("[data-forge-ch]").nth(9).evaluate((el) => {
-      const w = window as Window & { peak?: number };
-      w.peak = 0;
-      new MutationObserver(() => {
-        w.peak = Math.max(w.peak ?? 0, Number(el.style.getPropertyValue("--heat") || 0));
-      }).observe(el, { attributes: true, attributeFilter: ["style"] });
-    });
-    const box = (await page.locator("[data-forge-ch]").nth(9).boundingBox())!;
-    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-    await expect.poll(() => page.evaluate(() => (window as Window & { peak?: number }).peak)).toBeGreaterThan(0.8);
-    await ctx.close();
-  });
-
-  test("reduced motion gets the plain name: no strike, no heat", async ({ browser }) => {
+  test("reduced motion gets the solid name straight away, without a counter", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
     await page.goto("/");
-    const anim = await page.locator("[data-forge-ch]").first().evaluate((el) => getComputedStyle(el, "::before").animationName);
-    expect(anim).toBe("none");
-    const box = (await page.locator("[data-forge-ch]").nth(3).boundingBox())!;
-    await page.mouse.move(box.x + 10, box.y + 10, { steps: 4 });
-    await page.waitForTimeout(400);
-    expect(Math.max(...(await heats(page)))).toBe(0);
+    expect(await progress(page)).toBe(100);
+    expect(await page.getByTestId("name-count").evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
     await ctx.close();
   });
 });
