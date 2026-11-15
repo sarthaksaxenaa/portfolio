@@ -82,10 +82,13 @@ test.describe("cursor light", () => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-cursor", "on");
     // light-text paints glyphs with a gradient; if the gradient is invalid the text is transparent.
-    for (const sel of ["#warmup-title", "#grind-heading", "#cooldown a.light-text"]) {
+    for (const sel of ["#grind-heading", "#cooldown a.light-text"]) {
       const bg = await page.locator(sel).evaluate((el) => getComputedStyle(el).backgroundImage);
       expect(bg, sel).toContain("gradient");
     }
+    // The forged name draws its glyphs in ::before; they must have a real colour.
+    const glyph = await page.locator("[data-forge-ch]").first().evaluate((el) => getComputedStyle(el, "::before").color);
+    expect(glyph).not.toMatch(/rgba\(0, 0, 0, 0\)|transparent/);
   });
 
   test("follows a mouse and lights the page", async ({ page }) => {
@@ -263,6 +266,65 @@ test.describe("accessibility", () => {
     const skip = page.getByRole("link", { name: "Skip to content" });
     await expect(skip).toBeFocused();
     await expect(skip).toBeVisible();
+  });
+});
+
+test.describe("forged name", () => {
+  const heats = (page: import("@playwright/test").Page) =>
+    page.locator("[data-forge-ch]").evaluateAll((els) => els.map((e) => Number(e.style.getPropertyValue("--heat") || 0)));
+  const layout = (page: import("@playwright/test").Page) =>
+    page.locator("[data-forge-ch]").evaluateAll((els) => els.map((e) => [e.offsetLeft, e.offsetTop, e.offsetWidth].join()).join("|"));
+
+  test("a mouse heats the letters under it, heavier and lifted, without moving the layout", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(2000); // entrance finished
+    const before = await layout(page);
+    const box = (await page.locator("[data-forge-ch]").nth(3).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 6 });
+    await expect.poll(async () => (await heats(page))[3]).toBeGreaterThan(0.8);
+    const wght = await page
+      .locator("[data-forge-ch]")
+      .nth(3)
+      .evaluate((el) => parseFloat(getComputedStyle(el, "::before").fontVariationSettings.split(" ")[1]));
+    expect(wght).toBeGreaterThan(850);
+    expect((await heats(page))[12]).toBeLessThan(0.2); // the far end stays cool
+    await expect(page.locator("[data-forge-stage]")).toHaveAttribute("style", /rotateY/);
+    expect(await layout(page)).toBe(before); // weight swings never shift the page
+    await page.mouse.move(1400, 890, { steps: 4 });
+    await page.mouse.move(-1, -1);
+    await expect.poll(async () => Math.max(...(await heats(page)))).toBeLessThan(0.05);
+  });
+
+  test("on a phone a heat wave crosses the name on its own, and a finger heats a letter", async ({ browser }) => {
+    const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect.poll(async () => Math.max(...(await heats(page))), { timeout: 8000 }).toBeGreaterThan(0.4);
+    await expect.poll(async () => Math.max(...(await heats(page))), { timeout: 6000 }).toBeLessThan(0.05);
+    const box = (await page.locator("[data-forge-ch]").nth(9).boundingBox())!;
+    await page.evaluate(
+      ([x, y]) => {
+        const t = new Touch({ identifier: 1, target: document.body, clientX: x, clientY: y });
+        window.dispatchEvent(new TouchEvent("touchstart", { touches: [t] }));
+      },
+      [box.x + box.width / 2, box.y + box.height / 2],
+    );
+    await expect.poll(async () => (await heats(page))[9]).toBeGreaterThan(0.8);
+    await ctx.close();
+  });
+
+  test("reduced motion gets the plain name: no strike, no heat", async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    const anim = await page.locator("[data-forge-ch]").first().evaluate((el) => getComputedStyle(el, "::before").animationName);
+    expect(anim).toBe("none");
+    const box = (await page.locator("[data-forge-ch]").nth(3).boundingBox())!;
+    await page.mouse.move(box.x + 10, box.y + 10, { steps: 4 });
+    await page.waitForTimeout(400);
+    expect(Math.max(...(await heats(page)))).toBe(0);
+    await ctx.close();
   });
 });
 
