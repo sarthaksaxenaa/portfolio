@@ -273,7 +273,9 @@ test.describe("forged name", () => {
   const heats = (page: import("@playwright/test").Page) =>
     page.locator("[data-forge-ch]").evaluateAll((els) => els.map((e) => Number(e.style.getPropertyValue("--heat") || 0)));
   const layout = (page: import("@playwright/test").Page) =>
-    page.locator("[data-forge-ch]").evaluateAll((els) => els.map((e) => [e.offsetLeft, e.offsetTop, e.offsetWidth].join()).join("|"));
+    page
+      .locator("[data-forge-ch]")
+      .evaluateAll((els) => (els as HTMLElement[]).map((e) => [e.offsetLeft, e.offsetTop, e.offsetWidth].join()).join("|"));
 
   test("a mouse heats the letters under it, heavier and lifted, without moving the layout", async ({ page }) => {
     await page.goto("/");
