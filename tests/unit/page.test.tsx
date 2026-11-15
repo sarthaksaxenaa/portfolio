@@ -28,11 +28,29 @@ describe("home page", () => {
 
   it("every nav link points at a chapter that exists", () => {
     const { container } = render(<Home />);
-    const nav = screen.getByRole("navigation", { name: "Chapters" });
+    const nav = screen.getByRole("navigation", { name: "Sections" });
     for (const a of within(nav).getAllByRole("link")) {
       const target = a.getAttribute("href")!;
       expect(target.startsWith("#")).toBe(true);
       expect(container.querySelector(target)).not.toBeNull();
+    }
+  });
+
+  it("never shows internal chapter numbers or gym labels in the nav or section eyebrows", () => {
+    const { container } = render(<Home />);
+    const nav = screen.getByRole("navigation", { name: "Sections" });
+    expect(within(nav).getAllByRole("link").map((a) => a.textContent)).toEqual([
+      "Sarthak Saxena",
+      "Experience",
+      "Projects",
+      "Focus",
+      "Contact",
+      "Contact",
+    ]);
+    const visibleLabels = [nav.textContent ?? "", ...[...container.querySelectorAll("header p")].map((p) => p.textContent ?? "")];
+    for (const text of visibleLabels) {
+      expect(text).not.toMatch(/\b0[0-5]\b/);
+      expect(text).not.toMatch(/warm-up|the grind|set [12]|progressive overload|cool-down/i);
     }
   });
 

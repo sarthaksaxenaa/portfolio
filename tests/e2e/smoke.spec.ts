@@ -33,9 +33,19 @@ test("every stylesheet and script on the page loads", async ({ page }) => {
 
 test("nav links scroll to their chapters", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("navigation", { name: "Chapters" }).getByRole("link", { name: /CareNexus|Set 2/ }).click();
-  await expect(page).toHaveURL(/#carenexus$/);
-  await expect(page.locator("#carenexus")).toBeInViewport();
+  await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Projects" }).click();
+  await expect(page).toHaveURL(/#rideshare$/);
+  await expect(page.locator("#rideshare")).toBeInViewport();
+});
+
+test("a deep link to a section below the pinned track lands on that section", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/#carenexus");
+  await expect(page.locator("#rideshare [data-pin]")).toHaveClass(/is-pinned/);
+  await expect
+    .poll(() => page.locator("#carenexus").evaluate((el) => Math.round(el.getBoundingClientRect().top)))
+    .toBeLessThan(120);
+  await expect(page.locator("#carenexus-heading")).toBeInViewport();
 });
 
 test("portrait image loads", async ({ page }) => {
@@ -84,6 +94,24 @@ test.describe("cursor light", () => {
     await expect
       .poll(async () => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mx"))))
       .toBeCloseTo(420, 0);
+  });
+
+  test("the ring stays on the pointer while hovering links (regression: scale multiplied its position)", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/");
+    const ringCentre = () =>
+      page.evaluate(() => {
+        const r = document.querySelector(".cursor-ring")!.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      });
+    for (const name of ["Focus", "Experience"]) {
+      const box = (await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name }).boundingBox())!;
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await page.mouse.move(x, y, { steps: 12 });
+      await expect(page.locator("html")).toHaveAttribute("data-cursor-hover", "");
+      await expect.poll(async () => Math.hypot((await ringCentre()).x - x, (await ringCentre()).y - y)).toBeLessThan(3);
+    }
   });
 
   test("is absent with reduced motion", async ({ browser }) => {
@@ -178,7 +206,7 @@ test.describe("case studies", () => {
     await page.goto("/");
     await page.locator("#carenexus-heading").scrollIntoViewIfNeeded();
     await page.mouse.wheel(0, 200);
-    await expect(page.locator('nav a[aria-current="location"]')).toHaveAttribute("href", "#carenexus");
+    await expect(page.locator('nav a[aria-current="location"]')).toHaveText("Projects");
     await expect
       .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue("--glow")))
       .toBe("155 107 255");

@@ -1,7 +1,7 @@
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChapterObserver } from "@/components/motion/ChapterObserver";
-import { chapters } from "@/content/chapters";
+import { chapters, navItems } from "@/content/chapters";
 
 let positions: Record<string, number> = {};
 const H = 1000;
@@ -9,10 +9,10 @@ const H = 1000;
 function Page() {
   return (
     <>
-      <nav aria-label="Chapters">
-        {chapters.map((c) => (
-          <a key={c.id} href={`#${c.id}`}>
-            {c.label}
+      <nav aria-label="Sections">
+        {navItems.map((n) => (
+          <a key={n.href} href={n.href} data-chapters={n.chapters.join(" ")}>
+            {n.label}
           </a>
         ))}
       </nav>
@@ -53,10 +53,10 @@ const scrollTo = (y: number) =>
 const current = () => document.querySelector('[aria-current="location"]')?.getAttribute("href");
 
 describe("ChapterObserver", () => {
-  it("marks the first chapter on load and leaves glow white", () => {
+  it("marks no nav link in the hero and leaves glow white", () => {
     vi.stubGlobal("scrollY", 0);
     render(<Page />);
-    expect(current()).toBe("#warmup");
+    expect(current()).toBeUndefined();
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
 
@@ -67,6 +67,9 @@ describe("ChapterObserver", () => {
     expect(current()).toBe("#rideshare");
     expect(document.documentElement.getAttribute("data-chapter")).toBe("rideshare");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("129 140 248");
+    await scrollTo(3 * H); // CareNexus: still under "Projects"
+    expect(current()).toBe("#rideshare");
+    expect(document.documentElement.style.getPropertyValue("--glow")).toBe("155 107 255");
     await scrollTo(4 * H);
     expect(current()).toBe("#overload");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
@@ -85,12 +88,12 @@ describe("ChapterObserver", () => {
     expect(seen).toEqual(["warmup", "rideshare", "carenexus"]);
   });
 
-  it("only one link is ever current", async () => {
+  it("never marks more than one link", async () => {
     vi.stubGlobal("scrollY", 0);
     render(<Page />);
     for (const y of [0, 1500, 3000, 4200, 5900]) {
       await scrollTo(y);
-      expect(document.querySelectorAll('[aria-current="location"]')).toHaveLength(1);
+      expect(document.querySelectorAll('[aria-current="location"]').length).toBeLessThanOrEqual(1);
     }
   });
 
