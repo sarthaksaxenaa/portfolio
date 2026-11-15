@@ -69,11 +69,31 @@ describe("home page", () => {
     tags.forEach((t) => expect(t.textContent).toMatch(/^(Measured · |Reported by |Target)/));
   });
 
-  it("external links are https", () => {
+  it("external links are https and open safely in a new tab", () => {
     const { container } = render(<Home />);
-    container.querySelectorAll('a[href^="http"]').forEach((a) => {
+    const external = [...container.querySelectorAll('a[href^="http"]')];
+    expect(external.length).toBeGreaterThanOrEqual(8); // live sites, sources, SkillMatrix, profiles
+    for (const a of external) {
       expect(a.getAttribute("href")).toMatch(/^https:\/\//);
+      expect(a).toHaveAttribute("target", "_blank");
+      // noopener: the new page cannot reach back through window.opener (reverse tabnabbing).
+      expect(a.getAttribute("rel")?.split(" ")).toEqual(expect.arrayContaining(["noopener", "noreferrer"]));
+      expect(a.textContent).toContain("(opens in a new tab)");
+    }
+  });
+
+  it("in-page and email links stay in the same tab", () => {
+    const { container } = render(<Home />);
+    container.querySelectorAll('a[href^="#"], a[href^="mailto:"]').forEach((a) => {
+      expect(a).not.toHaveAttribute("target");
     });
+  });
+
+  it("decision cards carry no numbering", () => {
+    const { container } = render(<Home />);
+    const cards = container.querySelectorAll("section[data-accent] ol li");
+    expect(cards.length).toBe(6);
+    cards.forEach((li) => expect(li.textContent).not.toMatch(/^\s*0\d/));
   });
 });
 
