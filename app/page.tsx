@@ -6,10 +6,12 @@ import { Overload } from "@/components/chapters/Overload";
 import { Cooldown } from "@/components/chapters/Cooldown";
 import { chapterById } from "@/content/chapters";
 import { carenexus, rideshare } from "@/content/projects";
+import { buildStructuredData, serializeJsonLd } from "@/lib/structuredData";
 
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildStructuredData()) }} />
       <Nav />
       <main id="main">
         <Warmup />
