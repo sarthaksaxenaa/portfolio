@@ -271,17 +271,15 @@ test.describe("accessibility", () => {
 
 test.describe("hero name", () => {
   const progress = (page: import("@playwright/test").Page) =>
-    page.locator("#warmup-title").evaluate((el) => Number(getComputedStyle(el).getPropertyValue("--name-p")));
+    page.locator("#warmup-title").evaluate((el) => Number(getComputedStyle(el).getPropertyValue("--name-f")));
 
-  test("loads 00 → 100 like the intro, then the counter fades and the name stays solid", async ({ page }) => {
+  test("loads 0 → 100 like the intro and the name stays solid, with no number beside it", async ({ page }) => {
     await page.goto("/");
-    const count = page.getByTestId("name-count");
+    await expect(page.getByTestId("name-count")).toHaveCount(0);
     await expect.poll(() => progress(page)).toBeGreaterThan(5);
     const mid = await progress(page);
     expect(mid).toBeLessThan(100);
-    expect(await count.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeGreaterThan(0.5);
     await expect.poll(() => progress(page), { timeout: 5000 }).toBe(100);
-    await expect.poll(() => count.evaluate((el) => getComputedStyle(el).opacity), { timeout: 3000 }).toBe("0");
     // Fully loaded: the outline layer is masked away across the whole word.
     const mask = await page
       .locator('.hero-name-line[data-line="1"]')
@@ -300,12 +298,11 @@ test.describe("hero name", () => {
     expect(await line.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe(before);
   });
 
-  test("reduced motion gets the solid name straight away, without a counter", async ({ browser }) => {
+  test("reduced motion gets the solid name straight away", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
     await page.goto("/");
     expect(await progress(page)).toBe(100);
-    expect(await page.getByTestId("name-count").evaluate((el) => getComputedStyle(el).opacity)).toBe("0");
     await ctx.close();
   });
 });
