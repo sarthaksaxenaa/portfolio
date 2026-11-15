@@ -7,12 +7,15 @@ import { useMotion } from "./MotionProvider";
 const STRENGTH = 0.35; // fraction of the pointer offset the element follows
 const RADIUS = 1.6; // reach, as a multiple of the element's half-size
 
-/** [data-magnetic] elements lean toward a nearby mouse and spring back. Fine pointers, motion on. */
+/**
+ * [data-magnetic] elements lean toward a nearby mouse and spring back. With a finger they follow
+ * the touch while pressed and spring back on release, so phones get the same physical feel.
+ */
 export function Magnetic() {
   const { enabled } = useMotion();
 
   useEffect(() => {
-    if (!enabled || !window.matchMedia("(pointer: fine)").matches) return;
+    if (!enabled) return;
     let teardown: (() => void) | undefined;
     let cancelled = false;
     loadGsap().then(({ gsap }) => {
@@ -25,7 +28,28 @@ export function Magnetic() {
         on: false,
       }));
 
+      let pressed: (typeof movers)[number] | null = null;
+      const onDown = (e: PointerEvent) => {
+        if (e.pointerType !== "touch") return;
+        const hit = e.target instanceof Element ? e.target.closest<HTMLElement>("[data-magnetic]") : null;
+        pressed = movers.find((m) => m.el === hit) ?? null;
+        if (pressed) gsap.to(pressed.el, { scale: 0.94, duration: 0.15, ease: "power2.out" });
+      };
+      const onUp = () => {
+        if (!pressed) return;
+        gsap.to(pressed.el, { scale: 1, duration: 0.6, ease: "elastic.out(1, 0.4)" });
+        pressed.x(0);
+        pressed.y(0);
+        pressed = null;
+      };
       const onMove = (e: PointerEvent) => {
+        if (e.pointerType === "touch") {
+          if (!pressed) return;
+          const r = pressed.el.getBoundingClientRect();
+          pressed.x((e.clientX - (r.left + r.width / 2)) * STRENGTH);
+          pressed.y((e.clientY - (r.top + r.height / 2)) * STRENGTH);
+          return;
+        }
         for (const m of movers) {
           const r = m.el.getBoundingClientRect();
           const cx = r.left + r.width / 2;
@@ -45,9 +69,15 @@ export function Magnetic() {
         }
       };
       window.addEventListener("pointermove", onMove, { passive: true });
+      window.addEventListener("pointerdown", onDown, { passive: true });
+      window.addEventListener("pointerup", onUp, { passive: true });
+      window.addEventListener("pointercancel", onUp, { passive: true });
       teardown = () => {
         window.removeEventListener("pointermove", onMove);
-        gsap.set(els, { clearProps: "transform" });
+        window.removeEventListener("pointerdown", onDown);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+        gsap.set(els, { clearProps: "transform,scale" });
       };
     });
     return () => {
