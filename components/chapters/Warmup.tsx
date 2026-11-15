@@ -2,6 +2,7 @@ import Image from "next/image";
 import { chapterById } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { Eyebrow } from "@/components/ui/SectionHeader";
+import { HeroName } from "@/components/ui/HeroName";
 
 export function Warmup() {
   const chapter = chapterById("warmup");
@@ -23,18 +24,12 @@ export function Warmup() {
       />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6">
         <Eyebrow chapter={chapter} />
-        <h1
+        {/* Forge-in entrance is pure CSS (first paint, no JavaScript); NameForge adds the heat lens. */}
+        <HeroName
           id="warmup-title"
-          className="light-text font-display text-[clamp(3.25rem,11vw,10rem)] font-bold leading-[0.88] tracking-tight"
-        >
-          {/* Pure-CSS line reveal: runs on first paint, no JavaScript, so it never delays LCP. */}
-          <span className="hero-line">
-            <span>Sarthak</span>
-          </span>
-          <span className="hero-line">
-            <span>Saxena</span>
-          </span>
-        </h1>
+          name={profile.name}
+          className="font-display text-[clamp(3.25rem,11vw,10rem)] font-bold leading-[0.88] tracking-tight"
+        />
         <p className="max-w-xl text-lg text-muted md:text-xl">
           Sure enough to <em className="font-serif text-[1.15em] text-text">burn the ships.</em>
         </p>

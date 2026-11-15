@@ -329,23 +329,75 @@ html[data-preload="on"] {
 
 /* ───────────── Hardening (v0.9) ───────────── */
 
-/* Hero name: CSS-only line reveal. Starts on first paint, or when the preloader lifts. */
-.hero-line {
+/* Hero name: forged letter by letter.
+   Each letter is a spacer in the base weight (layout never moves) with the visible glyph drawn on
+   top as ::before. --heat (0 → 1) is written by NameForge: heavier, white-hot, lifted toward the
+   viewer in 3D. The entrance is pure CSS, so it starts on first paint with no JavaScript. */
+.hero-name {
+  perspective: 900px;
+}
+.hero-name-stage {
   display: block;
-  overflow: clip;
-  padding-bottom: 0.06em; /* room for descenders inside the mask */
+  transform-style: preserve-3d;
+  will-change: transform;
+  user-select: none;
 }
-.hero-line > span {
+.hero-name-word {
   display: block;
+  white-space: nowrap;
+  transform-style: preserve-3d;
+  padding-bottom: 0.06em;
 }
-html[data-motion="on"]:not([data-preload="on"]) .hero-line > span {
-  animation: hero-rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+.forge-ch {
+  --heat: 0;
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  transform-style: preserve-3d;
 }
-html[data-motion="on"]:not([data-preload="on"]) .hero-line:nth-child(2) > span {
-  animation-delay: 0.08s;
+.forge-ch::before {
+  content: attr(data-ch);
+  position: absolute;
+  left: 50%;
+  top: 0;
+  color: color-mix(in srgb, #c4c4cb, #ffffff calc(var(--heat) * 100%));
+  font-variation-settings: "wght" calc(700 + 200 * var(--heat));
+  text-shadow:
+    0 0 calc(var(--heat) * 0.18em) rgb(255 255 255 / calc(var(--heat) * 0.55)),
+    0 0 calc(var(--heat) * 0.5em) rgb(255 255 255 / calc(var(--heat) * 0.2));
+  transform: translateX(-50%) translateZ(calc(var(--heat) * 0.3em)) scaleY(calc(1 + var(--heat) * 0.05));
+  transform-origin: 50% 85%;
 }
-@keyframes hero-rise {
-  from {
-    transform: translateY(105%);
+html[data-motion="on"]:not([data-preload="on"]) .forge-ch::before {
+  /* backwards, not both: once struck, the letter belongs to --heat again. */
+  animation: forge-in 1.15s cubic-bezier(0.2, 0.9, 0.25, 1) backwards;
+  animation-delay: calc(var(--i) * 55ms + 80ms);
+}
+@keyframes forge-in {
+  0% {
+    opacity: 0;
+    color: #ffffff;
+    font-variation-settings: "wght" 100;
+    filter: blur(0.08em);
+    text-shadow: 0 0 0.4em rgb(255 255 255 / 0.9);
+    transform: translateX(-50%) translateZ(0.6em) translateY(-0.12em) scaleY(1.25);
+  }
+  45% {
+    opacity: 1;
+    color: #ffffff;
+    font-variation-settings: "wght" 900;
+    filter: blur(0);
+    text-shadow: 0 0 0.25em rgb(255 255 255 / 0.7);
+    transform: translateX(-50%) translateZ(0) translateY(0.03em) scaleY(0.92);
+  }
+  70% {
+    font-variation-settings: "wght" 760;
+    transform: translateX(-50%) translateZ(0) translateY(0) scaleY(1.02);
+  }
+  100% {
+    color: #c4c4cb;
+    font-variation-settings: "wght" 700;
+    text-shadow: 0 0 0 rgb(255 255 255 / 0);
+    transform: translateX(-50%) translateZ(0) scaleY(1);
   }
 }
