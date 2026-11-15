@@ -329,75 +329,109 @@ html[data-preload="on"] {
 
 /* ───────────── Hardening (v0.9) ───────────── */
 
-/* Hero name: forged letter by letter.
-   Each letter is a spacer in the base weight (layout never moves) with the visible glyph drawn on
-   top as ::before. --heat (0 → 1) is written by NameForge: heavier, white-hot, lifted toward the
-   viewer in 3D. The entrance is pure CSS, so it starts on first paint with no JavaScript. */
+/* Hero name: loads like the intro counter. Each line starts as a faint outline and a solid fill
+   sweeps through it, Sarthak first and Saxena overlapping its end, while a counter beside the
+   name runs 00 → 100. Pure CSS: registered properties animate the progress, a CSS counter
+   prints it, so it starts on first paint with no JavaScript. Without motion it is simply solid. */
+@property --name-p {
+  syntax: "<integer>";
+  inherits: true;
+  initial-value: 100;
+}
+@property --name-f {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 100;
+}
 .hero-name {
-  perspective: 900px;
+  --name-p: 100;
+  --name-f: 100;
 }
-.hero-name-stage {
-  display: block;
-  transform-style: preserve-3d;
-  will-change: transform;
-  user-select: none;
+html[data-motion="on"]:not([data-preload="on"]) .hero-name {
+  /* Same shape as the intro: quick to the 80s, a short hold in the 90s, then 100. */
+  animation: name-load 2.2s linear 0.15s both;
 }
-.hero-name-word {
-  display: block;
-  white-space: nowrap;
-  transform-style: preserve-3d;
-  padding-bottom: 0.06em;
-}
-.forge-ch {
-  --heat: 0;
-  position: relative;
-  display: inline-block;
-  color: transparent;
-  transform-style: preserve-3d;
-}
-.forge-ch::before {
-  content: attr(data-ch);
-  position: absolute;
-  left: 50%;
-  top: 0;
-  color: color-mix(in srgb, #c4c4cb, #ffffff calc(var(--heat) * 100%));
-  font-variation-settings: "wght" calc(700 + 200 * var(--heat));
-  text-shadow:
-    0 0 calc(var(--heat) * 0.18em) rgb(255 255 255 / calc(var(--heat) * 0.55)),
-    0 0 calc(var(--heat) * 0.5em) rgb(255 255 255 / calc(var(--heat) * 0.2));
-  transform: translateX(-50%) translateZ(calc(var(--heat) * 0.3em)) scaleY(calc(1 + var(--heat) * 0.05));
-  transform-origin: 50% 85%;
-}
-html[data-motion="on"]:not([data-preload="on"]) .forge-ch::before {
-  /* backwards, not both: once struck, the letter belongs to --heat again. */
-  animation: forge-in 1.15s cubic-bezier(0.2, 0.9, 0.25, 1) backwards;
-  animation-delay: calc(var(--i) * 55ms + 80ms);
-}
-@keyframes forge-in {
+@keyframes name-load {
   0% {
-    opacity: 0;
-    color: #ffffff;
-    font-variation-settings: "wght" 100;
-    filter: blur(0.08em);
-    text-shadow: 0 0 0.4em rgb(255 255 255 / 0.9);
-    transform: translateX(-50%) translateZ(0.6em) translateY(-0.12em) scaleY(1.25);
+    --name-p: 0;
+    --name-f: 0;
+    animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
   }
-  45% {
-    opacity: 1;
-    color: #ffffff;
-    font-variation-settings: "wght" 900;
-    filter: blur(0);
-    text-shadow: 0 0 0.25em rgb(255 255 255 / 0.7);
-    transform: translateX(-50%) translateZ(0) translateY(0.03em) scaleY(0.92);
+  62% {
+    --name-p: 86;
+    --name-f: 86;
+    animation-timing-function: ease-in-out;
   }
-  70% {
-    font-variation-settings: "wght" 760;
-    transform: translateX(-50%) translateZ(0) translateY(0) scaleY(1.02);
+  82% {
+    --name-p: 93;
+    --name-f: 93;
+    animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.6);
   }
   100% {
-    color: #c4c4cb;
-    font-variation-settings: "wght" 700;
-    text-shadow: 0 0 0 rgb(255 255 255 / 0);
-    transform: translateX(-50%) translateZ(0) scaleY(1);
+    --name-p: 100;
+    --name-f: 100;
+  }
+}
+.hero-name-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.hero-name-line {
+  --fill: clamp(0%, calc(var(--name-f) * 100% / 55), 100%);
+  position: relative;
+  display: block;
+  width: fit-content;
+  padding-bottom: 0.06em;
+  color: transparent;
+  /* The filled part, with a thin bright leading edge like a progress bar. */
+  background-image: linear-gradient(
+    90deg,
+    #c4c4cb calc(var(--fill) - 1.5%),
+    #ffffff var(--fill),
+    transparent var(--fill)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.hero-name-line[data-line="1"] {
+  --fill: clamp(0%, calc((var(--name-f) - 45) * 100% / 55), 100%);
+}
+/* The not-yet-loaded part: an outline, masked away wherever the fill has arrived. */
+.hero-name-line::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: transparent;
+  -webkit-text-stroke: 1px rgb(255 255 255 / 0.28);
+  -webkit-mask-image: linear-gradient(90deg, transparent var(--fill), #000 var(--fill));
+  mask-image: linear-gradient(90deg, transparent var(--fill), #000 var(--fill));
+  pointer-events: none;
+}
+.hero-name-count {
+  counter-reset: name-p var(--name-p);
+  margin-top: 0.12em;
+  /* The intro counter's face, scaled with the name and never smaller than body text. */
+  font-size: max(1rem, 0.2em);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+  opacity: 0; /* only shown while the name is loading */
+}
+.hero-name-count::after {
+  content: counter(name-p, decimal-leading-zero) "%";
+}
+html[data-motion="on"]:not([data-preload="on"]) .hero-name-count {
+  animation: name-count 2.75s linear 0.15s both;
+}
+@keyframes name-count {
+  0%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }

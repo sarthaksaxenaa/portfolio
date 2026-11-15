@@ -8,23 +8,27 @@ describe("HeroName", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Sarthak Saxena" })).toBeInTheDocument();
   });
 
-  it("draws every letter as decoration, each carrying its glyph and line", () => {
+  it("draws two loading lines, each carrying its own text for the outline layer", () => {
     const { container } = render(<HeroName id="t" name="Sarthak Saxena" />);
-    const stage = container.querySelector("[data-forge-stage]")!;
-    expect(stage).toHaveAttribute("aria-hidden", "true");
-    const letters = Array.from(container.querySelectorAll<HTMLElement>("[data-forge-ch]"));
-    expect(letters.map((l) => l.dataset.ch).join("")).toBe("SarthakSaxena");
-    expect(letters.map((l) => l.textContent).join("")).toBe("SarthakSaxena");
-    expect(letters.filter((l) => l.dataset.line === "1")).toHaveLength(6);
+    const lines = Array.from(container.querySelectorAll<HTMLElement>(".hero-name-line"));
+    expect(lines.map((l) => [l.dataset.line, l.dataset.text, l.textContent])).toEqual([
+      ["0", "Sarthak", "Sarthak"],
+      ["1", "Saxena", "Saxena"],
+    ]);
+    expect(lines[0].closest("[aria-hidden]")).not.toBeNull();
   });
 
-  it("staggers left to right, the second line starting a beat early", () => {
-    const { container } = render(<HeroName id="t" name="Sarthak Saxena" />);
-    const order = Array.from(container.querySelectorAll<HTMLElement>("[data-forge-ch]")).map((l) =>
-      Number(l.style.getPropertyValue("--i")),
-    );
-    expect(order.slice(0, 7)).toEqual([0, 1, 2, 3, 4, 5, 6]);
-    expect(order[7]).toBe(4); // overlaps the first line's last three letters
-    expect(order.slice(7)).toEqual([4, 5, 6, 7, 8, 9]);
+  it("puts the counter beside the last line, hidden from assistive tech", () => {
+    render(<HeroName id="t" name="Sarthak Saxena" />);
+    const count = screen.getByTestId("name-count");
+    expect(count.previousElementSibling).toHaveAttribute("data-text", "Saxena");
+    expect(count.closest("[aria-hidden]")).not.toBeNull();
+    expect(count).toBeEmptyDOMElement(); // the number is drawn by CSS
+  });
+
+  it("copes with a single-word name", () => {
+    const { container } = render(<HeroName id="t" name="Sarthak" />);
+    expect(container.querySelectorAll(".hero-name-line")).toHaveLength(1);
+    expect(screen.queryByTestId("name-count")).toBeNull();
   });
 });

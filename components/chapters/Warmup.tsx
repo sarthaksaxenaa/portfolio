@@ -24,7 +24,7 @@ export function Warmup() {
       />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6">
         <Eyebrow chapter={chapter} />
-        {/* Forge-in entrance is pure CSS (first paint, no JavaScript); NameForge adds the heat lens. */}
+        {/* Loads 00 → 100 like the intro; pure CSS, so it starts on first paint with no JavaScript. */}
         <HeroName
           id="warmup-title"
           name={profile.name}
