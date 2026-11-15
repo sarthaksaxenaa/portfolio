@@ -2,9 +2,11 @@
 
 import { useEffect } from "react";
 import { loadGsap } from "@/lib/loadMotion";
+import { startDeferred } from "@/lib/schedule";
 import { useMotion } from "./MotionProvider";
 
-export const PIN_QUERY = "(min-width: 1024px) and (pointer: fine)";
+/** Every screen: phones get the same sideways walk through the decisions, driven by scroll. */
+export const PIN_QUERY = "all";
 
 const NAV_HEIGHT = 72;
 let hashRealigned = false;
@@ -23,10 +25,10 @@ function realignHash() {
 }
 
 /**
- * [data-pin] blocks containing a [data-pin-track] pin on large screens and turn vertical
+ * [data-pin] blocks containing a [data-pin-track] pin on every screen and turn vertical
  * scroll into a horizontal walk through the track. The wide horizontal layout is applied
- * only while the pin is live (.is-pinned), so phones, keyboards-only scrolling and MOTION OFF
- * keep the normal stacked grid and never see a half-built horizontal strip.
+ * only while the pin is live (.is-pinned), so reduced motion and no-JS keep the normal
+ * stacked grid and never see a half-built horizontal strip.
  */
 export function PinnedTracks() {
   const { enabled } = useMotion();
@@ -35,7 +37,9 @@ export function PinnedTracks() {
     if (!enabled) return;
     let mm: gsap.MatchMedia | undefined;
     let cancelled = false;
-    loadGsap().then(({ gsap, ScrollTrigger }) => {
+    // The galleries sit well below the fold: on phones, measure and pin them after the first
+    // touch or scroll so the layout work never lands on the first paint.
+    const stop = startDeferred(() => loadGsap().then(({ gsap, ScrollTrigger }) => {
       if (cancelled) return;
       mm = gsap.matchMedia();
 
@@ -78,13 +82,14 @@ export function PinnedTracks() {
         });
 
         ScrollTrigger.refresh();
-      realignHash();
+        realignHash();
         return () => cleanups.forEach((fn) => fn());
       });
-    });
+    }), { eager: window.location.hash.length > 1 });
 
     return () => {
       cancelled = true;
+      stop();
       mm?.revert();
     };
   }, [enabled]);

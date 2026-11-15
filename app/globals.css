@@ -259,6 +259,11 @@ nav a[aria-current="location"] {
   flex: none;
   width: min(34rem, 42vw);
 }
+@media (max-width: 767px) {
+  .is-pinned [data-pin-track] > li {
+    width: 82vw; /* one card per screen on phones, the next one peeking in */
+  }
+}
 /* Inside the moving track the light uses card-local coordinates. */
 html[data-cursor="on"] .is-pinned .light-card::before {
   background-attachment: scroll;
