@@ -6,6 +6,22 @@ import { useMotion } from "./MotionProvider";
 
 export const PIN_QUERY = "(min-width: 1024px) and (pointer: fine)";
 
+const NAV_HEIGHT = 72;
+let hashRealigned = false;
+
+/**
+ * A deep link (/#carenexus) is scrolled to by the browser before the pins add their scroll
+ * length, so it lands short. Once the pins exist, scroll to the target again, once per page load.
+ */
+function realignHash() {
+  if (hashRealigned) return;
+  hashRealigned = true;
+  const id = decodeURIComponent(window.location.hash.slice(1));
+  const target = id ? document.getElementById(id) : null;
+  if (!target) return;
+  window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - NAV_HEIGHT, behavior: "instant" });
+}
+
 /**
  * [data-pin] blocks containing a [data-pin-track] pin on large screens and turn vertical
  * scroll into a horizontal walk through the track. The wide horizontal layout is applied
@@ -62,6 +78,7 @@ export function PinnedTracks() {
         });
 
         ScrollTrigger.refresh();
+      realignHash();
         return () => cleanups.forEach((fn) => fn());
       });
     });
