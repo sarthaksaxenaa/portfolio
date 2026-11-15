@@ -2,7 +2,6 @@ import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CursorLight } from "@/components/cursor/CursorLight";
 import { MotionProvider } from "@/components/motion/MotionProvider";
-import { MotionToggle } from "@/components/motion/MotionToggle";
 
 const Light = () => (
   <MotionProvider>
@@ -134,21 +133,6 @@ describe("CursorLight", () => {
       );
     });
     expect(root().hasAttribute("data-cursor-hover")).toBe(true);
-  });
-
-  it("turns off when the visitor switches motion off, and back on", () => {
-    mockMedia({ "(pointer: fine)": true });
-    render(
-      <MotionProvider>
-        <MotionToggle />
-        <CursorLight />
-      </MotionProvider>,
-    );
-    expect(screen.getByTestId("cursor-light")).toBeInTheDocument();
-    act(() => screen.getByRole("switch", { name: "Motion" }).click());
-    expect(screen.queryByTestId("cursor-light")).toBeNull();
-    act(() => screen.getByRole("switch", { name: "Motion" }).click());
-    expect(screen.getByTestId("cursor-light")).toBeInTheDocument();
   });
 
   it("turns off live when reduced motion is switched on", () => {

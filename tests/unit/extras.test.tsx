@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { MOTION_KEY, PRELOAD_KEY, motionBootScript, preloadBootScript, shouldPreload } from "@/lib/motion";
+import { PRELOAD_KEY, motionBootScript, preloadBootScript, shouldPreload } from "@/lib/motion";
 import { Preloader } from "@/components/motion/Preloader";
 
 const root = document.documentElement;
@@ -14,10 +14,8 @@ describe("shouldPreload", () => {
 });
 
 describe("preload boot script", () => {
-  const boot = (opts: { motion: "on" | "off" | null; seen: boolean; reduced?: boolean }) => {
+  const boot = (opts: { seen: boolean; reduced?: boolean }) => {
     root.removeAttribute("data-preload");
-    if (opts.motion) localStorage.setItem(MOTION_KEY, opts.motion);
-    else localStorage.removeItem(MOTION_KEY);
     if (opts.seen) sessionStorage.setItem(PRELOAD_KEY, "1");
     else sessionStorage.removeItem(PRELOAD_KEY);
     vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce") && !!opts.reduced }));
@@ -28,10 +26,9 @@ describe("preload boot script", () => {
   };
   afterEach(() => sessionStorage.clear());
 
-  it("marks the page on a first visit with motion on", () => expect(boot({ motion: null, seen: false })).toBe("on"));
-  it("skips on a repeat visit in the same session", () => expect(boot({ motion: null, seen: true })).toBeNull());
-  it("skips when the visitor switched motion off", () => expect(boot({ motion: "off", seen: false })).toBeNull());
-  it("skips for reduced-motion visitors", () => expect(boot({ motion: null, seen: false, reduced: true })).toBeNull());
+  it("marks the page on a first visit with motion on", () => expect(boot({ seen: false })).toBe("on"));
+  it("skips on a repeat visit in the same session", () => expect(boot({ seen: true })).toBeNull());
+  it("skips for reduced-motion visitors", () => expect(boot({ seen: false, reduced: true })).toBeNull());
   it("does not throw when sessionStorage is blocked", () => {
     const spy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("blocked");

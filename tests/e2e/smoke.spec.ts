@@ -143,24 +143,20 @@ test.describe("motion", () => {
     await expect(heading).toBeVisible();
   });
 
-  test("MOTION OFF persists across reloads and disables smooth scroll and the cursor light", async ({ page }) => {
+  test("there is no on-page motion switch", async ({ page }) => {
     await page.goto("/");
-    const sw = page.getByRole("switch", { name: "Motion" });
-    await sw.click();
-    await expect(sw).toHaveAttribute("aria-checked", "false");
-    await page.reload();
-    await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
-    await expect(page.locator("html")).not.toHaveClass(/lenis/);
-    await expect(page.getByTestId("cursor-light")).toHaveCount(0);
-    await expect(page.locator("#overload-heading")).not.toHaveAttribute("data-split-ready", "");
+    await expect(page.getByRole("switch")).toHaveCount(0);
+    await expect(page.getByText(/motion (on|off)/i)).toHaveCount(0);
   });
 
-  test("reduced-motion visitors start with motion off", async ({ browser }) => {
+  test("reduced-motion visitors get no smooth scroll, reveals or cursor light", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
-    await expect(page.getByRole("switch", { name: "Motion" })).toHaveAttribute("aria-checked", "false");
+    await expect(page.locator("html")).not.toHaveClass(/lenis/);
+    await expect(page.getByTestId("cursor-light")).toHaveCount(0);
+    await expect(page.locator("#overload-heading")).not.toHaveAttribute("data-split-ready", "");
     await ctx.close();
   });
 
@@ -216,10 +212,10 @@ test.describe("case studies", () => {
 test.describe("accessibility", () => {
   for (const motion of ["on", "off"] as const) {
     test(`no serious or critical axe violations (motion ${motion})`, async ({ page }) => {
+      if (motion === "off") await page.emulateMedia({ reducedMotion: "reduce" });
       await page.goto("/");
-      if (motion === "off") await page.getByRole("switch", { name: "Motion" }).click();
       // Wait until reveals are set up, or the "all visible" check below passes before they start.
-      else await expect(page.locator("#grind-heading")).toHaveAttribute("data-split-ready", "");
+      if (motion === "on") await expect(page.locator("#grind-heading")).toHaveAttribute("data-split-ready", "");
       // Let reveals finish so axe sees final colours, not mid-fade opacity.
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await expect
@@ -282,9 +278,9 @@ test.describe("particle hero", () => {
     await ctx.close();
   });
 
-  test("draws a single still frame with motion off", async ({ page }) => {
+  test("draws a single still frame for reduced-motion visitors", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
-    await page.getByRole("switch", { name: "Motion" }).click();
     const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
     test.skip(!webgl, "no WebGL in this browser");
     await expect(page.getByTestId("particle-canvas")).toHaveAttribute("data-frameloop", "demand", { timeout: 10_000 });

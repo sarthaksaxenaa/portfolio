@@ -1,66 +1,45 @@
-import { act, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MOTION_KEY, motionBootScript, motionEnabled, readMotionPref, writeMotionPref } from "@/lib/motion";
+import { LEGACY_MOTION_KEY, motionBootScript, motionEnabled } from "@/lib/motion";
 import { MotionProvider, useMotion } from "@/components/motion/MotionProvider";
-import { MotionToggle } from "@/components/motion/MotionToggle";
+import Home from "@/app/page";
 
-const throwing = {
-  getItem: () => {
-    throw new Error("SecurityError");
-  },
-  setItem: () => {
-    throw new Error("QuotaExceededError");
-  },
-};
-
-describe("motion preference", () => {
-  it("explicit choice beats the OS setting; no choice follows the OS", () => {
-    expect(motionEnabled("on", true)).toBe(true);
-    expect(motionEnabled("off", false)).toBe(false);
-    expect(motionEnabled(null, true)).toBe(false);
-    expect(motionEnabled(null, false)).toBe(true);
-  });
-
-  it("ignores garbage in storage", () => {
-    for (const v of ["yes", "", "ON", "true", "null"]) {
-      expect(readMotionPref({ getItem: () => v, setItem: () => {} })).toBeNull();
-    }
-  });
-
-  it("survives storage that throws (Safari private mode, blocked storage)", () => {
-    expect(readMotionPref(throwing)).toBeNull();
-    expect(writeMotionPref(throwing, "off")).toBe(false);
-    expect(readMotionPref(null)).toBeNull();
-    expect(writeMotionPref(undefined, "on")).toBe(false);
-  });
-
-  it("round-trips through real storage", () => {
-    expect(writeMotionPref(localStorage, "off")).toBe(true);
-    expect(readMotionPref(localStorage)).toBe("off");
+describe("motion follows the operating system only", () => {
+  it("is on unless the OS asks for reduced motion", () => {
+    expect(motionEnabled(false)).toBe(true);
+    expect(motionEnabled(true)).toBe(false);
   });
 });
 
 describe("boot script", () => {
-  const run = (stored: string | null, reduced: boolean) => {
-    if (stored === null) localStorage.removeItem(MOTION_KEY);
-    else localStorage.setItem(MOTION_KEY, stored);
+  const run = (reduced: boolean) => {
     vi.stubGlobal("matchMedia", (q: string) => ({ matches: q.includes("reduce") && reduced }));
     new Function(motionBootScript)();
     vi.unstubAllGlobals();
     return document.documentElement.getAttribute("data-motion");
   };
 
-  it("matches motionEnabled() for every combination", () => {
-    for (const stored of ["on", "off", null, "junk"] as const) {
-      for (const reduced of [true, false]) {
-        const expected = motionEnabled(stored === "on" || stored === "off" ? stored : null, reduced) ? "on" : "off";
-        expect(run(stored, reduced), `${stored}/${reduced}`).toBe(expected);
-      }
-    }
+  it("matches motionEnabled() before first paint", () => {
+    expect(run(false)).toBe("on");
+    expect(run(true)).toBe("off");
+  });
+
+  it("ignores and deletes a saved 'off' from the removed switch, so no visitor stays stuck", () => {
+    localStorage.setItem(LEGACY_MOTION_KEY, "off");
+    expect(run(false)).toBe("on");
+    expect(localStorage.getItem(LEGACY_MOTION_KEY)).toBeNull();
+  });
+
+  it("does not throw when storage is blocked", () => {
+    const spy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(run(false)).toBe("on");
+    spy.mockRestore();
   });
 });
 
-describe("MotionProvider + MotionToggle", () => {
+describe("MotionProvider", () => {
   afterEach(() => vi.unstubAllGlobals());
   const media = (reduced: boolean) =>
     vi.stubGlobal("matchMedia", (q: string) => ({
@@ -68,63 +47,27 @@ describe("MotionProvider + MotionToggle", () => {
       addEventListener: () => {},
       removeEventListener: () => {},
     }));
-
   function Probe() {
-    const { enabled } = useMotion();
-    return <span data-testid="motion">{enabled ? "on" : "off"}</span>;
+    return <span data-testid="motion">{useMotion().enabled ? "on" : "off"}</span>;
   }
-  const ui = () =>
-    render(
-      <MotionProvider>
-        <MotionToggle />
-        <Probe />
-      </MotionProvider>,
-    );
 
-  it("defaults to on without reduced motion and exposes a switch", () => {
+  it("is on by default and marks the page", () => {
     media(false);
-    ui();
-    const sw = screen.getByRole("switch", { name: "Motion" });
-    expect(sw).toHaveAttribute("aria-checked", "true");
+    render(<MotionProvider><Probe /></MotionProvider>);
+    expect(screen.getByTestId("motion")).toHaveTextContent("on");
     expect(document.documentElement.getAttribute("data-motion")).toBe("on");
   });
 
-  it("defaults to off with reduced motion", () => {
+  it("is off for reduced-motion visitors", () => {
     media(true);
-    ui();
-    expect(screen.getByRole("switch", { name: "Motion" })).toHaveAttribute("aria-checked", "false");
-  });
-
-  it("toggling persists the choice and updates the page", () => {
-    media(false);
-    ui();
-    act(() => screen.getByRole("switch", { name: "Motion" }).click());
-    expect(screen.getByTestId("motion")).toHaveTextContent("off");
-    expect(localStorage.getItem(MOTION_KEY)).toBe("off");
-    expect(document.documentElement.getAttribute("data-motion")).toBe("off");
-  });
-
-  it("restores a saved choice on the next visit", () => {
-    media(false);
-    localStorage.setItem(MOTION_KEY, "off");
-    ui();
+    render(<MotionProvider><Probe /></MotionProvider>);
     expect(screen.getByTestId("motion")).toHaveTextContent("off");
   });
 
-  it("lets a reduced-motion visitor opt in explicitly", () => {
-    media(true);
-    ui();
-    act(() => screen.getByRole("switch", { name: "Motion" }).click());
-    expect(screen.getByTestId("motion")).toHaveTextContent("on");
-  });
-
-  it("still toggles for this visit when storage is blocked", () => {
+  it("the page offers no motion switch", () => {
     media(false);
-    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-      throw new Error("blocked");
-    });
-    ui();
-    act(() => screen.getByRole("switch", { name: "Motion" }).click());
-    expect(screen.getByTestId("motion")).toHaveTextContent("off");
+    render(<MotionProvider><Home /></MotionProvider>);
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByText(/motion (on|off)/i)).toBeNull();
   });
 });
