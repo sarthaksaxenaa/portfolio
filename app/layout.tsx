@@ -13,7 +13,6 @@ import { ChapterObserver } from "@/components/motion/ChapterObserver";
 import { SceneLayer } from "@/components/scene/SceneLayer";
 import { motionBootScript, preloadBootScript } from "@/lib/motion";
 import { Preloader } from "@/components/motion/Preloader";
-import { NameForge } from "@/components/motion/NameForge";
 import { Magnetic } from "@/components/motion/Magnetic";
 import "./globals.css";
 
@@ -85,7 +84,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <PinnedTracks />
           <ChapterObserver />
           <Magnetic />
-          <NameForge />
           <Preloader />
         </MotionProvider>
       </body>
