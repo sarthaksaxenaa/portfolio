@@ -126,11 +126,22 @@ test.describe("cursor light", () => {
     await ctx.close();
   });
 
-  test("is absent on a touch phone", async ({ browser }) => {
+  test("on a touch phone: the light follows a tap, ripples, and glides along while scrolling", async ({ browser }) => {
     const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
     const page = await ctx.newPage();
     await page.goto("/");
-    await expect(page.getByTestId("cursor-light")).toHaveCount(0);
+    await expect(page.getByTestId("cursor-light")).toHaveAttribute("data-mode", "touch");
+    await expect(page.locator(".cursor-ring")).toHaveCount(0);
+    await page.touchscreen.tap(100, 600);
+    await expect(page.locator(".cursor-ripple")).toHaveClass(/is-rippling/);
+    await expect
+      .poll(() => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mx"))))
+      .toBeCloseTo(100, 0);
+    await page.evaluate(() => window.scrollBy(0, 600));
+    await expect
+      .poll(() => page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--mx"))))
+      .toBeCloseTo(195, 0);
     await ctx.close();
   });
 });
@@ -193,11 +204,21 @@ test.describe("case studies", () => {
     expect(factsBox!.y).toBeGreaterThanOrEqual(blockBox!.y + blockBox!.height - 1);
   });
 
-  test("decisions stay a normal stacked list on a phone", async ({ browser }) => {
+  test("on a phone the decisions walk sideways too, one card per screen, without page overflow", async ({ browser }) => {
     const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
     const page = await ctx.newPage();
     await page.goto("/");
-    await expect(page.locator("#rideshare [data-pin]")).not.toHaveClass(/is-pinned/);
+    const block = page.locator("#rideshare [data-pin]");
+    // Phones build the pins after the first touch or scroll, never during first paint.
+    await page.waitForTimeout(1500);
+    await expect(block).not.toHaveClass(/is-pinned/);
+    await page.evaluate(() => window.scrollBy(0, 200));
+    await expect(block).toHaveClass(/is-pinned/);
+    const card = block.locator("[data-pin-track] > li").first();
+    expect((await card.boundingBox())!.width).toBeCloseTo(390 * 0.82, -1);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
     await ctx.close();
   });
 
@@ -267,17 +288,22 @@ test.describe("particle hero", () => {
     expect(await layer.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
   });
 
-  test("phones never download three.js", async ({ browser }) => {
+  test("phones load the 3D scene after the first scroll, never before", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 412, height: 823 }, isMobile: true, hasTouch: true });
+    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
     const page = await ctx.newPage();
     const three: string[] = [];
     page.on("response", async (r) => {
       if (r.url().endsWith(".js") && (await r.text().catch(() => "")).includes("WebGLRenderer")) three.push(r.url());
     });
     await page.goto("/", { waitUntil: "networkidle" });
-    await page.waitForTimeout(2500); // past load + idle, when desktops would start the scene
+    await page.waitForTimeout(2500); // past load + idle: a desktop would have started by now
     expect(three).toEqual([]);
-    await expect(page.getByTestId("scene-layer")).toHaveCount(0);
+    await page.evaluate(() => window.scrollBy(0, 400));
+    const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
+    test.skip(!webgl, "no WebGL in this browser");
+    await expect(page.getByTestId("scene-layer")).toHaveAttribute("data-tier", "low", { timeout: 10_000 });
+    await expect.poll(() => three.length).toBeGreaterThan(0);
     await ctx.close();
   });
 
