@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { Chapter, Project } from "@/content/schema";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatTile } from "@/components/ui/StatTile";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 
 type Props = { chapter: Chapter; project: Project; lead: string };
 
@@ -38,21 +39,21 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
             </dl>
             <div className="flex flex-wrap gap-3 pt-2">
               {project.liveUrl && (
-                <a
+                <ExternalLink
                   href={project.liveUrl}
                   data-magnetic
                   className="rounded-full px-4 py-2 text-sm font-medium text-bg"
                   style={{ background: project.accent }}
                 >
                   Live site
-                </a>
+                </ExternalLink>
               )}
-              <a
+              <ExternalLink
                 href={project.repoUrl}
                 className="rounded-full border border-hairline px-4 py-2 text-sm transition-colors hover:border-text"
               >
                 Source
-              </a>
+              </ExternalLink>
             </div>
           </div>
         </div>
@@ -70,15 +71,12 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
             Decisions, and what I said no to
           </h3>
           <ol data-pin-track className="grid gap-6 lg:grid-cols-3">
-            {project.decisions.map((d, i) => (
+            {project.decisions.map((d) => (
               <li
                 key={d.context}
                 data-reveal
                 className="light-card flex flex-col gap-3 rounded-2xl border border-hairline bg-surface-1 p-6"
               >
-                <span className="font-mono text-xs text-[var(--chapter-accent)]">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
                 <p className="font-medium">{d.context}</p>
                 <p className="text-sm text-muted">
                   <span className="text-text">Chose: </span>
