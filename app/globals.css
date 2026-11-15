@@ -90,6 +90,10 @@ html[data-cursor-visible="true"] .cursor-layers > * {
   will-change: transform;
 }
 
+/* The wrapper is only positioned (JS writes its transform); the visible ring is a pseudo-element
+   so growing it on hover never touches the wrapper. The CSS scale property is applied before
+   transform, so scaling the wrapper itself would multiply its translate and fling the ring
+   away from the pointer (at 1.7x, a pointer at x=660 drew the ring at x=1120). */
 .cursor-ring {
   top: 0;
   left: 0;
@@ -97,12 +101,17 @@ html[data-cursor-visible="true"] .cursor-layers > * {
   width: 34px;
   height: 34px;
   margin: -17px 0 0 -17px;
-  border: 1px solid rgb(255 255 255 / 0.55);
-  border-radius: 50%;
-  transition: opacity 400ms ease, scale 250ms cubic-bezier(0.22, 1, 0.36, 1), border-color 250ms ease;
   will-change: transform;
 }
-html[data-cursor-hover] .cursor-ring {
+.cursor-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgb(255 255 255 / 0.55);
+  border-radius: 50%;
+  transition: scale 250ms cubic-bezier(0.22, 1, 0.36, 1), border-color 250ms ease;
+}
+html[data-cursor-hover] .cursor-ring::after {
   scale: 1.7;
   border-color: rgb(255 255 255 / 0.9);
 }
