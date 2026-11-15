@@ -304,15 +304,17 @@ test.describe("forged name", () => {
     await page.goto("/");
     await expect.poll(async () => Math.max(...(await heats(page))), { timeout: 8000 }).toBeGreaterThan(0.4);
     await expect.poll(async () => Math.max(...(await heats(page))), { timeout: 6000 }).toBeLessThan(0.05);
+    // Record the hottest the tapped letter gets: a quick tap should still leave a heat pulse.
+    await page.locator("[data-forge-ch]").nth(9).evaluate((el) => {
+      const w = window as Window & { peak?: number };
+      w.peak = 0;
+      new MutationObserver(() => {
+        w.peak = Math.max(w.peak ?? 0, Number(el.style.getPropertyValue("--heat") || 0));
+      }).observe(el, { attributes: true, attributeFilter: ["style"] });
+    });
     const box = (await page.locator("[data-forge-ch]").nth(9).boundingBox())!;
-    await page.evaluate(
-      ([x, y]) => {
-        const t = new Touch({ identifier: 1, target: document.body, clientX: x, clientY: y });
-        window.dispatchEvent(new TouchEvent("touchstart", { touches: [t] }));
-      },
-      [box.x + box.width / 2, box.y + box.height / 2],
-    );
-    await expect.poll(async () => (await heats(page))[9]).toBeGreaterThan(0.8);
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await expect.poll(() => page.evaluate(() => (window as Window & { peak?: number }).peak)).toBeGreaterThan(0.8);
     await ctx.close();
   });
 
