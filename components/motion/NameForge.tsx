@@ -19,6 +19,7 @@ const COOL_DOWN = 4.5; // …and gives it back slowly
 const TILT_RATE = 6;
 const WAVE_STRENGTH = 0.8;
 const WAVE_TILT = 0.35; // the wave leans the name a little, never as much as a pointer
+const TAP_LINGER_MS = 380; // a quick tap still leaves a visible heat pulse
 
 /**
  * The heat lens on the forged name. A mouse, pen or finger near a letter makes it heavier,
@@ -48,6 +49,7 @@ export function NameForge() {
     let px = 0;
     let py = 0;
     let pointer = false;
+    let lingerUntil = 0;
     let visible = true;
     let tiltX = 0;
     let tiltY = 0;
@@ -64,7 +66,7 @@ export function NameForge() {
 
       // Hold the waves while the first-visit preloader covers the page.
       if (document.documentElement.getAttribute("data-preload") === "on") nextWave = now + FIRST_WAVE_MS;
-      const live = visible && pointer;
+      const live = visible && (pointer || now < lingerUntil);
       if (live) {
         waveStart = -1;
         nextWave = now + WAVE_GAP_MS;
@@ -114,7 +116,7 @@ export function NameForge() {
       } else busy = true;
       stage.style.transform = tiltX || tiltY ? `rotateX(${tiltX.toFixed(2)}deg) rotateY(${tiltY.toFixed(2)}deg)` : "";
 
-      if (busy) raf = requestAnimationFrame(frame);
+      if (busy || now < lingerUntil) raf = requestAnimationFrame(frame);
       else {
         last = 0;
         // Asleep until the pointer moves again or the next wave is due.
@@ -153,6 +155,7 @@ export function NameForge() {
     const onTouchEnd = (e: TouchEvent) => {
       if (e.touches.length) return;
       pointer = false;
+      lingerUntil = performance.now() + TAP_LINGER_MS;
       kick();
     };
 
