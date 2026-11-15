@@ -4,22 +4,16 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { DPR_CAP, PARTICLES, detectTier, readHints, type Tier } from "@/lib/deviceTier";
 import { useMotion } from "@/components/motion/MotionProvider";
+import { startDeferred } from "@/lib/schedule";
 
 // three.js and the shaders only download after the page is interactive, never on the server.
+// Phones start on the first touch or scroll: the hero has no particles, so nothing is missing before then.
 const ParticleField = dynamic(() => import("./ParticleField"), { ssr: false });
 
-/** After the load event and the next idle period: 3D never competes with first paint or hydration. */
-const whenIdle = (cb: () => void) => {
-  const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-  const idle = () => (w.requestIdleCallback ? w.requestIdleCallback(cb, { timeout: 4000 }) : setTimeout(cb, 300));
-  if (document.readyState === "complete") idle();
-  else window.addEventListener("load", idle, { once: true });
-};
-
 /**
- * One fixed WebGL layer behind the whole page. The particles form a sphere around the
- * portrait in the hero, then morph into a new shape for each chapter. The device tier is
- * decided first; weak or no-WebGL devices get nothing extra, since the page is complete without it.
+ * One fixed WebGL layer behind the whole page, on every device with WebGL. The particles take a
+ * new shape for each section and close as a sphere beside the contact section; the hero has none.
+ * The device tier sets the particle budget; only browsers without WebGL (or with Save-Data) skip it.
  */
 export function SceneLayer() {
   const { enabled } = useMotion();
@@ -27,9 +21,11 @@ export function SceneLayer() {
 
   useEffect(() => {
     let alive = true;
-    whenIdle(() => alive && setTier(detectTier(readHints())));
+    const start = () => alive && setTier(detectTier(readHints()));
+    const stop = startDeferred(start);
     return () => {
       alive = false;
+      stop();
     };
   }, []);
 
