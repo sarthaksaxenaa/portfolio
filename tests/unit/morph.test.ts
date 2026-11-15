@@ -65,12 +65,19 @@ describe("morph targets", () => {
     }
   });
 
-  it("every chapter has a morph index and an opacity, and text chapters stay faint", () => {
+  it("the hero shows no particles at all: nothing is ever drawn over the portrait", () => {
+    expect(CHAPTER_OPACITY.warmup).toBe(0);
+  });
+
+  it("every chapter has a shape; text sections stay faint; the sphere closes the page at Contact", () => {
     for (const c of chapters) {
       expect(MORPH_INDEX[c.id]).toBeTypeOf("number");
-      expect(CHAPTER_OPACITY[c.id]).toBeGreaterThan(0);
-      if (c.id !== "warmup") expect(CHAPTER_OPACITY[c.id]).toBeLessThanOrEqual(0.3);
+      if (c.id !== "warmup" && c.id !== "cooldown") {
+        expect(CHAPTER_OPACITY[c.id]).toBeGreaterThan(0);
+        expect(CHAPTER_OPACITY[c.id]).toBeLessThanOrEqual(0.3);
+      }
     }
-    expect(MORPH_INDEX.warmup).toBe(0);
+    expect(MORPH_INDEX.cooldown).toBe(4); // sphere
+    expect(CHAPTER_OPACITY.cooldown).toBeGreaterThan(CHAPTER_OPACITY.overload);
   });
 });

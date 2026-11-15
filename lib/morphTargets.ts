@@ -138,7 +138,7 @@ export function field(count: number): Float32Array {
   return out;
 }
 
-/** Chapter → morph index used by the shader (0 sphere, 1 grid, 2 roads, 3 body, 4 field). */
+/** Chapter → morph index used by the shader (0 field, 1 grid, 2 roads, 3 body, 4 sphere). */
 export const MORPH_INDEX: Record<string, number> = {
   warmup: 0,
   grind: 1,
@@ -148,12 +148,15 @@ export const MORPH_INDEX: Record<string, number> = {
   cooldown: 4,
 };
 
-/** How visible the particles are per chapter: the hero shows them, text chapters keep them faint. */
+/**
+ * How visible the particles are per chapter. The hero shows none: the portrait stands alone.
+ * The sphere is brightest at Contact, where it has empty space beside "Say hi".
+ */
 export const CHAPTER_OPACITY: Record<string, number> = {
-  warmup: 0.5,
+  warmup: 0,
   grind: 0.2,
   rideshare: 0.16,
   carenexus: 0.2,
   overload: 0.22,
-  cooldown: 0.3,
+  cooldown: 0.5,
 };

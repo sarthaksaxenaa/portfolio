@@ -7,7 +7,7 @@ import { damp } from "@/lib/cursor";
 import { fibonacciSphere, seeds } from "@/lib/sphere";
 import { CHAPTER_OPACITY, MORPH_INDEX, body, field, grid, roads } from "@/lib/morphTargets";
 import { fragmentShader, vertexShader } from "./shaders";
-import { CAM_Z, FOV, HALF_Y, heroPlacement } from "@/lib/heroPlacement";
+import { CAM_Z, FOV, placements } from "@/lib/scenePlacement";
 
 type Props = {
   count: number;
@@ -21,11 +21,6 @@ const FAR = 99;
 
 
 const currentChapter = () => document.documentElement.getAttribute("data-chapter") ?? "warmup";
-
-function portraitRect() {
-  const el = document.getElementById("hero-portrait");
-  return el ? el.getBoundingClientRect() : null;
-}
 
 function Field({ count, animate }: { count: number; animate: boolean }) {
   const material = useRef<ShaderMaterial>(null);
@@ -56,7 +51,6 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
       uMorph: { value: 0 },
       uRot: { value: 0 },
       uSphere: { value: [0, 0, 1, 0] },
-      uKeepOut: { value: [0, 0, 1, 0] },
       uRight: { value: [0, 0, 1, 0] },
       uFull: { value: [0, 0, 1, 1] },
       uOpacity: { value: 0 },
@@ -85,7 +79,6 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
   useEffect(() => {
     if (!animate) return;
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType === "touch") return;
       pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       pointer.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
       pointer.current.target = 1;
@@ -93,10 +86,20 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
     const onLeave = (e: MouseEvent) => {
       if (!e.relatedTarget) pointer.current.target = 0;
     };
+    // A finger pushes the particles while it is down; lifting it lets them settle.
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType === "touch") pointer.current.target = 0;
+    };
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onMove, { passive: true });
+    window.addEventListener("pointerup", onUp, { passive: true });
+    window.addEventListener("pointercancel", onUp, { passive: true });
     document.addEventListener("mouseout", onLeave);
     return () => {
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       document.removeEventListener("mouseout", onLeave);
     };
   }, [animate]);
@@ -111,17 +114,13 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
     const s = state.current;
     const w = size.width;
     const h = size.height;
-    const aspect = w / h;
-    const halfX = HALF_Y * aspect;
+    const place = placements(w, h);
 
     u.uPixelRatio.value = gl.getPixelRatio();
     u.uSize.value = Math.min(w, h) / 70;
-    const hero = heroPlacement(portraitRect(), w, h, halfX);
-    u.uSphere.value = [...hero.sphere, 0];
-    u.uKeepOut.value = hero.keepOut;
-    u.uRight.value =
-      aspect >= 1 ? [halfX * 0.66, -0.05, HALF_Y * 0.68, 0] : [0, -0.1, halfX * 0.9, 0];
-    u.uFull.value = [0, 0, halfX * 1.05, HALF_Y * 1.05];
+    u.uSphere.value = place.sphere;
+    u.uRight.value = place.right;
+    u.uFull.value = place.full;
 
     const targetMorph = MORPH_INDEX[s.chapter] ?? 0;
     const targetOpacity = CHAPTER_OPACITY[s.chapter] ?? 0.25;

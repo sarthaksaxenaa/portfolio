@@ -52,10 +52,9 @@ uniform float uSize;
 uniform float uPixelRatio;
 uniform vec2  uMouse;      // pointer in NDC (-1..1), far away when unknown
 uniform float uMouseForce; // 0..1, eased in and out
-uniform float uMorph;      // 0 sphere, 1 grid, 2 roads, 3 body, 4 field (fractions blend)
+uniform float uMorph;      // 0 field, 1 grid, 2 roads, 3 body, 4 sphere (fractions blend)
 uniform float uRot;        // sphere spin, radians
 uniform vec4  uSphere;     // xy centre, z radius (world units)
-uniform vec4  uKeepOut;    // portrait face + shoulders: xy centre (NDC), zw radii (NDC); w = 0 disables
 uniform vec4  uRight;      // placement for roads and body: xy centre, z scale
 uniform vec4  uFull;       // placement for grid and field: xy centre, z half-width, w half-height
 attribute float aSeed;
@@ -71,11 +70,11 @@ ${simplex3d}
 vec3 rotY(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(c*v.x + s*v.z, v.y, -s*v.x + c*v.z); }
 
 void main() {
-  float wSphere = 1.0 - clamp(uMorph, 0.0, 1.0);
+  float wField  = 1.0 - clamp(uMorph, 0.0, 1.0);
   float wRoad   = clamp(uMorph - 1.0, 0.0, 1.0) * (1.0 - clamp(uMorph - 2.0, 0.0, 1.0));
-  float wField  = clamp(uMorph - 3.0, 0.0, 1.0);
+  float wSphere = clamp(uMorph - 3.0, 0.0, 1.0);
 
-  // Sphere: noise-driven contour bands, spinning, centred on the portrait.
+  // Sphere: noise-driven contour bands, spinning; it closes the page beside the contact section.
   vec3 n = normalize(position);
   float flow = snoise(n * 1.6 + vec3(0.0, uTime * 0.12, uTime * 0.05));
   float ripple = snoise(n * 4.0 + uTime * 0.25) * 0.25;
@@ -92,11 +91,11 @@ void main() {
   f.y = mod(f.y + 1.0 + uTime * 0.03 * (0.5 + aSeed), 2.0) - 1.0;
   vec3 tField = vec3(uFull.xy, 0.0) + vec3(f.x * uFull.z, f.y * uFull.w, f.z);
 
-  vec3 p = tSphere;
-  p = mix(p, tGrid,  clamp(uMorph, 0.0, 1.0));
-  p = mix(p, tRoad,  clamp(uMorph - 1.0, 0.0, 1.0));
-  p = mix(p, tBody,  clamp(uMorph - 2.0, 0.0, 1.0));
-  p = mix(p, tField, clamp(uMorph - 3.0, 0.0, 1.0));
+  vec3 p = tField;
+  p = mix(p, tGrid,   clamp(uMorph, 0.0, 1.0));
+  p = mix(p, tRoad,   clamp(uMorph - 1.0, 0.0, 1.0));
+  p = mix(p, tBody,   clamp(uMorph - 2.0, 0.0, 1.0));
+  p = mix(p, tSphere, clamp(uMorph - 3.0, 0.0, 1.0));
 
   // Pointer repulsion in screen space.
   vec4 clip = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
@@ -115,13 +114,6 @@ void main() {
   float pulse = smoothstep(0.92, 1.0, fract(aAlong * 3.0 - uTime * 0.35 + aSeed * 0.15));
   float flatA = 0.55 + wRoad * pulse * 1.6 - wField * 0.15;
   vAlpha = mix(flatA, sphereA, wSphere) * (0.7 + 0.3 * aSeed) + push * 0.6;
-
-  // Keep-out zone: particles never draw over the face and shoulders in the portrait.
-  if (uKeepOut.w > 0.0) {
-    vec2 ndcP = gl_Position.xy / gl_Position.w;
-    vec2 q = (ndcP - uKeepOut.xy) / uKeepOut.zw;
-    vAlpha *= smoothstep(1.0, 1.35, length(q));
-  }
 
   gl_PointSize = uSize * uPixelRatio * (0.6 + 0.6 * aSeed) * (1.0 / -mv.z);
 }
