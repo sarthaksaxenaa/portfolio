@@ -82,7 +82,7 @@ function banner() {
 </style>
 <rect width="${W}" height="${H}" fill="${BG}"/>
 <g class="s">${dots.join("")}</g>
-<text x="64" y="96" class="m" font-size="16" letter-spacing="1.5">00 / WARM-UP</text>
+<text x="64" y="96" class="m" font-size="16" letter-spacing="1.5">FULL-STACK ENGINEER</text>
 <text x="60" y="200" class="t rise" font-size="96" font-weight="700" letter-spacing="-3">Sarthak</text>
 <text x="60" y="288" class="t rise d2" font-size="96" font-weight="700" letter-spacing="-3">Saxena</text>
 <text x="64" y="346" class="m rise d3" font-size="20">Sure enough to burn the ships.</text>

@@ -34,7 +34,7 @@ export default async function Image() {
         }}
       >
         <div style={{ display: "flex", fontFamily: "Geist Mono", fontSize: 22, color: color.muted, letterSpacing: 2 }}>
-          00 / WARM-UP
+          FULL-STACK ENGINEER
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 132, lineHeight: 0.9, letterSpacing: -5 }}>Sarthak</div>

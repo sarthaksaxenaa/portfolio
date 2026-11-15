@@ -61,7 +61,7 @@ export function Preloader() {
       <span className="preloader-count font-display" ref={countRef}>
         00
       </span>
-      <span className="preloader-label font-mono">Warming up</span>
+      <span className="preloader-label font-mono">Loading</span>
     </div>
   );
 }
