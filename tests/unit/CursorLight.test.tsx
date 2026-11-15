@@ -58,11 +58,58 @@ const move = (x: number, y: number, pointerType = "mouse") =>
   });
 
 describe("CursorLight", () => {
-  it("renders nothing on touch devices", () => {
+  it("on touch devices: light and tap ripple, but no ring replacing a cursor that is not there", () => {
     mockMedia({ "(pointer: fine)": false });
+    const { container } = render(<Light />);
+    expect(screen.getByTestId("cursor-light")).toHaveAttribute("data-mode", "touch");
+    expect(root().getAttribute("data-cursor-mode")).toBe("touch");
+    expect(container.querySelector(".cursor-ring")).toBeNull();
+    expect(container.querySelector(".cursor-ripple")).not.toBeNull();
+  });
+
+  it("on touch: the light follows a dragging finger and a tap starts a ripple at that point", () => {
+    mockMedia({ "(pointer: fine)": false });
+    const { container } = render(<Light />);
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerdown", { clientX: 120, clientY: 300, pointerType: "touch" }));
+    });
+    flush();
+    expect(root().style.getPropertyValue("--mx")).toBe("120.0px");
+    const ripple = container.querySelector(".cursor-ripple") as HTMLElement;
+    expect(ripple.classList.contains("is-rippling")).toBe(true);
+    expect(ripple.style.transform).toContain("120px, 300px");
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointermove", { clientX: 200, clientY: 300, pointerType: "touch" }));
+    });
+    flush(200);
+    expect(parseFloat(root().style.getPropertyValue("--mx"))).toBeCloseTo(200, 0);
+  });
+
+  it("on touch: scrolling without a finger down glides the light to the reading line", () => {
+    mockMedia({ "(pointer: fine)": false });
+    vi.stubGlobal("innerWidth", 390);
+    vi.stubGlobal("innerHeight", 800);
     render(<Light />);
-    expect(screen.queryByTestId("cursor-light")).toBeNull();
-    expect(root().hasAttribute("data-cursor")).toBe(false);
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+    flush(200);
+    expect(parseFloat(root().style.getPropertyValue("--mx"))).toBeCloseTo(195, 0);
+    expect(parseFloat(root().style.getPropertyValue("--my"))).toBeCloseTo(320, 0);
+    expect(root().getAttribute("data-cursor-visible")).toBe("true");
+  });
+
+  it("on touch: the light does not jump to the reading line while a finger is down", () => {
+    mockMedia({ "(pointer: fine)": false });
+    vi.stubGlobal("innerWidth", 390);
+    vi.stubGlobal("innerHeight", 800);
+    render(<Light />);
+    act(() => {
+      window.dispatchEvent(new PointerEvent("pointerdown", { clientX: 40, clientY: 700, pointerType: "touch" }));
+      window.dispatchEvent(new Event("scroll"));
+    });
+    flush(200);
+    expect(parseFloat(root().style.getPropertyValue("--mx"))).toBeCloseTo(40, 0);
   });
 
   it("renders nothing when the user prefers reduced motion", () => {

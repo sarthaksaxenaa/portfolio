@@ -129,11 +129,40 @@ html[data-cursor-hover] .cursor-ring::after {
   will-change: transform;
 }
 
-/* The ring replaces the arrow only while it is actually showing. */
-html[data-cursor-visible="true"],
-html[data-cursor-visible="true"] a,
-html[data-cursor-visible="true"] button {
+/* The ring replaces the arrow only while it is actually showing (mouse mode only). */
+html[data-cursor-mode="full"][data-cursor-visible="true"],
+html[data-cursor-mode="full"][data-cursor-visible="true"] a,
+html[data-cursor-mode="full"][data-cursor-visible="true"] button {
   cursor: none;
+}
+
+/* Touch: a ring of light expands from the finger on every tap. */
+.cursor-ripple {
+  top: 0;
+  left: 0;
+  z-index: 60;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border-radius: 50%;
+  border: 1px solid rgb(var(--glow, 255 255 255) / 0.7);
+}
+/* Hidden at rest; the keyframes below override this while a ripple plays. */
+html .cursor-layers > .cursor-ripple {
+  opacity: 0;
+}
+.cursor-ripple.is-rippling {
+  animation: ripple 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes ripple {
+  0% {
+    opacity: 0.9;
+    scale: 0.4;
+  }
+  100% {
+    opacity: 0;
+    scale: 6;
+  }
 }
 
 /* Card border light: one fixed-attachment gradient shared by every card, masked to the 1px border. */

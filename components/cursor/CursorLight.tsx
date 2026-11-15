@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { clampDt, cursorMode, damp, INTERACTIVE, settled, type CursorMode } from "@/lib/cursor";
+import { acceptsPointer, clampDt, cursorMode, damp, INTERACTIVE, readingPoint, settled, type CursorMode } from "@/lib/cursor";
 import { useMotion } from "@/components/motion/MotionProvider";
 
 const GLOW_LAMBDA = 9; // the ambient glow trails a little
@@ -29,6 +29,7 @@ export function CursorLight() {
   const glowRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
+  const rippleRef = useRef<HTMLDivElement>(null);
 
   // Re-evaluate when the user plugs in a mouse or changes their motion setting.
   useEffect(() => {
@@ -41,11 +42,15 @@ export function CursorLight() {
 
   useEffect(() => {
     const root = document.documentElement;
-    if (mode !== "full") {
+    if (mode === "off") {
       root.removeAttribute("data-cursor");
+      root.removeAttribute("data-cursor-mode");
       return;
     }
     root.setAttribute("data-cursor", "on");
+    root.setAttribute("data-cursor-mode", mode);
+    const touch = mode === "touch";
+    let touching = false;
 
     const target = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const glow = { ...target };
@@ -86,7 +91,8 @@ export function CursorLight() {
     };
 
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType && e.pointerType !== "mouse" && e.pointerType !== "pen") return;
+      if (!acceptsPointer(mode, e.pointerType)) return;
+      if (touch && e.pointerType === "touch" && !touching && e.type === "pointermove") return;
       target.x = e.clientX;
       target.y = e.clientY;
       if (!visible) {
@@ -108,12 +114,43 @@ export function CursorLight() {
       wake();
     };
     const onLeave = (e: MouseEvent) => {
-      if (!e.relatedTarget) setVisible(false);
+      if (!touch && !e.relatedTarget) setVisible(false);
+    };
+
+    // Touch: a tap sends a ripple from the finger; dragging moves the light.
+    const onDown = (e: PointerEvent) => {
+      if (!touch || !acceptsPointer(mode, e.pointerType)) return;
+      touching = true;
+      onMove(e);
+      const ripple = rippleRef.current;
+      if (ripple) {
+        ripple.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+        ripple.classList.remove("is-rippling");
+        void ripple.offsetWidth; // restart the CSS animation
+        ripple.classList.add("is-rippling");
+      }
+    };
+    const onUp = () => {
+      touching = false;
+    };
+    // Touch, not touching: the light glides to the reading line, so headings and cards light up
+    // as they scroll through it.
+    const onScroll = () => {
+      if (!touch || touching) return;
+      const p = readingPoint(window.innerWidth, window.innerHeight);
+      target.x = p.x;
+      target.y = p.y;
+      setVisible(true);
+      wake();
     };
     const onHide = () => setVisible(false);
     const onVisibility = () => document.visibilityState === "hidden" && setVisible(false);
 
     window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onDown, { passive: true });
+    window.addEventListener("pointerup", onUp, { passive: true });
+    window.addEventListener("pointercancel", onUp, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
     document.addEventListener("mouseout", onLeave);
     window.addEventListener("blur", onHide);
     document.addEventListener("visibilitychange", onVisibility);
@@ -121,23 +158,33 @@ export function CursorLight() {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("scroll", onScroll);
       document.removeEventListener("mouseout", onLeave);
       window.removeEventListener("blur", onHide);
       document.removeEventListener("visibilitychange", onVisibility);
-      ["data-cursor", "data-cursor-visible", "data-cursor-hover"].forEach((a) => root.removeAttribute(a));
+      ["data-cursor", "data-cursor-mode", "data-cursor-visible", "data-cursor-hover"].forEach((a) => root.removeAttribute(a));
       root.style.removeProperty("--mx");
       root.style.removeProperty("--my");
     };
   }, [mode]);
 
-  if (mode !== "full") return null;
+  if (mode === "off") return null;
 
   return (
-    <div aria-hidden="true" data-testid="cursor-light" className="cursor-layers">
+    <div aria-hidden="true" data-testid="cursor-light" data-mode={mode} className="cursor-layers">
       <div className="cursor-dots" />
       <div ref={glowRef} className="cursor-glow" />
-      <div ref={ringRef} className="cursor-ring" />
-      <div ref={dotRef} className="cursor-dot" />
+      {mode === "full" ? (
+        <>
+          <div ref={ringRef} className="cursor-ring" />
+          <div ref={dotRef} className="cursor-dot" />
+        </>
+      ) : (
+        <div ref={rippleRef} className="cursor-ripple" />
+      )}
     </div>
   );
 }

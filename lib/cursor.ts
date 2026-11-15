@@ -2,22 +2,38 @@
  * Pure helpers for the cursor light. Kept free of DOM access so they are unit-testable.
  */
 
-export type CursorMode = "full" | "off";
+/**
+ * full:  mouse or trackpad. Light follows the pointer; a ring and dot replace the arrow.
+ * touch: phones and tablets. Light follows the finger while touching, glides to the reading
+ *        line while scrolling, and a tap sends a ripple. No ring (there is no cursor to replace).
+ * off:   the visitor's OS asks for reduced motion.
+ */
+export type CursorMode = "full" | "touch" | "off";
 
 export type Environment = {
   /** matchMedia("(pointer: fine)") — a mouse or trackpad, not a finger */
   finePointer: boolean;
   /** matchMedia("(prefers-reduced-motion: reduce)") */
   reducedMotion: boolean;
-  /** The site's own MOTION OFF switch (added in v0.4); false until then */
+  /** Motion disabled for any other reason */
   motionOff?: boolean;
 };
 
-/** Touch devices have no hover, and reduced-motion users get no moving light. */
 export function cursorMode(env: Environment): CursorMode {
-  if (!env.finePointer) return "off";
   if (env.reducedMotion || env.motionOff) return "off";
-  return "full";
+  return env.finePointer ? "full" : "touch";
+}
+
+/** Where the light rests while a touch visitor scrolls: centred, on the reading line. */
+export function readingPoint(width: number, height: number): { x: number; y: number } {
+  return { x: width / 2, y: height * 0.4 };
+}
+
+/** Which pointer events drive the light in each mode (hybrid laptops report both kinds). */
+export function acceptsPointer(mode: CursorMode, pointerType: string | undefined): boolean {
+  if (mode === "off") return false;
+  if (mode === "touch") return true;
+  return !pointerType || pointerType === "mouse" || pointerType === "pen";
 }
 
 /**
