@@ -5,8 +5,7 @@ type Props = { chapter: Chapter; id?: string; as?: "h1" | "h2"; className?: stri
 export function Eyebrow({ chapter }: { chapter: Chapter }) {
   return (
     <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
-      <span className="text-[var(--chapter-accent,var(--color-accent))]">{chapter.index}</span>
-      <span aria-hidden> / </span>
+      <span aria-hidden className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[var(--chapter-accent,var(--color-accent))] align-middle" />
       {chapter.label}
     </p>
   );

@@ -37,8 +37,10 @@ export function ChapterObserver() {
       const glow = id ? accentByChapter[id] : undefined;
       if (glow) root.style.setProperty("--glow", glow);
       else root.style.removeProperty("--glow");
-      document.querySelectorAll<HTMLAnchorElement>('nav[aria-label="Chapters"] a[href^="#"]').forEach((a) => {
-        if (a.getAttribute("href") === `#${id}`) a.setAttribute("aria-current", "location");
+      // A nav link may cover several sections (Projects = both case studies).
+      document.querySelectorAll<HTMLAnchorElement>("nav a[data-chapters]").forEach((a) => {
+        const covers = (a.dataset.chapters ?? "").split(" ");
+        if (id && covers.includes(id)) a.setAttribute("aria-current", "location");
         else a.removeAttribute("aria-current");
       });
     };
