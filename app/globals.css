@@ -330,21 +330,15 @@ html[data-preload="on"] {
 /* ───────────── Hardening (v0.9) ───────────── */
 
 /* Hero name: loads like the intro counter. Each line starts as a faint outline and a solid fill
-   sweeps through it, Sarthak first and Saxena overlapping its end, while a counter beside the
-   name runs 00 → 100. Pure CSS: registered properties animate the progress, a CSS counter
-   prints it, so it starts on first paint with no JavaScript. Without motion it is simply solid. */
-@property --name-p {
-  syntax: "<integer>";
-  inherits: true;
-  initial-value: 100;
-}
+   sweeps through it, Sarthak first and Saxena overlapping its end, on the intro counter's
+   00 → 100 curve. Pure CSS: a registered property animates the progress, so it starts on first
+   paint with no JavaScript. Without motion it is simply solid. */
 @property --name-f {
   syntax: "<number>";
   inherits: true;
   initial-value: 100;
 }
 .hero-name {
-  --name-p: 100;
   --name-f: 100;
 }
 html[data-motion="on"]:not([data-preload="on"]) .hero-name {
@@ -353,29 +347,20 @@ html[data-motion="on"]:not([data-preload="on"]) .hero-name {
 }
 @keyframes name-load {
   0% {
-    --name-p: 0;
     --name-f: 0;
     animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
   }
   62% {
-    --name-p: 86;
     --name-f: 86;
     animation-timing-function: ease-in-out;
   }
   82% {
-    --name-p: 93;
     --name-f: 93;
     animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.6);
   }
   100% {
-    --name-p: 100;
-    --name-f: 100;
+      --name-f: 100;
   }
-}
-.hero-name-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
 }
 .hero-name-line {
   --fill: clamp(0%, calc(var(--name-f) * 100% / 55), 100%);
@@ -407,31 +392,4 @@ html[data-motion="on"]:not([data-preload="on"]) .hero-name {
   -webkit-mask-image: linear-gradient(90deg, transparent var(--fill), #000 var(--fill));
   mask-image: linear-gradient(90deg, transparent var(--fill), #000 var(--fill));
   pointer-events: none;
-}
-.hero-name-count {
-  counter-reset: name-p var(--name-p);
-  margin-top: 0.12em;
-  /* The intro counter's face, scaled with the name and never smaller than body text. */
-  font-size: max(1rem, 0.2em);
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  color: var(--color-muted);
-  font-variant-numeric: tabular-nums;
-  opacity: 0; /* only shown while the name is loading */
-}
-.hero-name-count::after {
-  content: counter(name-p, decimal-leading-zero) "%";
-}
-html[data-motion="on"]:not([data-preload="on"]) .hero-name-count {
-  animation: name-count 2.75s linear 0.15s both;
-}
-@keyframes name-count {
-  0%,
-  82% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
 }

@@ -18,17 +18,15 @@ describe("HeroName", () => {
     expect(lines[0].closest("[aria-hidden]")).not.toBeNull();
   });
 
-  it("puts the counter beside the last line, hidden from assistive tech", () => {
-    render(<HeroName id="t" name="Sarthak Saxena" />);
-    const count = screen.getByTestId("name-count");
-    expect(count.previousElementSibling).toHaveAttribute("data-text", "Saxena");
-    expect(count.closest("[aria-hidden]")).not.toBeNull();
-    expect(count).toBeEmptyDOMElement(); // the number is drawn by CSS
+  it("shows no number or percentage next to the name", () => {
+    const { container } = render(<HeroName id="t" name="Sarthak Saxena" />);
+    expect(container.querySelector("[data-testid=name-count]")).toBeNull();
+    expect(container.textContent).not.toMatch(/\d|%/);
   });
 
   it("copes with a single-word name", () => {
     const { container } = render(<HeroName id="t" name="Sarthak" />);
     expect(container.querySelectorAll(".hero-name-line")).toHaveLength(1);
-    expect(screen.queryByTestId("name-count")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Sarthak" })).toBeInTheDocument();
   });
 });
