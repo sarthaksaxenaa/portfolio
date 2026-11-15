@@ -69,9 +69,12 @@ test("no horizontal overflow on a 360px phone", async ({ page }) => {
   expect(overflow).toBeLessThanOrEqual(0);
 });
 
-test("unknown routes return 404", async ({ page }) => {
+test("unknown routes return a styled 404 with a way back", async ({ page }) => {
   const res = await page.goto("/this-page-does-not-exist");
   expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Missed the rep.");
+  await page.getByRole("link", { name: "Back to the portfolio" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test.describe("cursor light", () => {
@@ -358,6 +361,13 @@ test.describe("sharing and search", () => {
 
     const sitemap = await (await request.get("/sitemap.xml")).text();
     expect(sitemap).toContain("<loc>https://sarthxen.vercel.app</loc>");
+    const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);
+    expect(ld["@graph"].map((n: { "@type": string }) => n["@type"])).toEqual(
+      expect.arrayContaining(["Person", "WebSite", "ProfilePage", "SoftwareApplication"]),
+    );
+    expect((await request.get("/apple-icon")).headers()["content-type"]).toContain("image/png");
+    const manifest = await (await request.get("/manifest.webmanifest")).json();
+    expect(manifest.short_name).toBe("sarthxen");
     const robots = await (await request.get("/robots.txt")).text();
     expect(robots).toContain("Sitemap: https://sarthxen.vercel.app/sitemap.xml");
   });
