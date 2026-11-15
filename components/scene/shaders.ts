@@ -55,6 +55,7 @@ uniform float uMouseForce; // 0..1, eased in and out
 uniform float uMorph;      // 0 sphere, 1 grid, 2 roads, 3 body, 4 field (fractions blend)
 uniform float uRot;        // sphere spin, radians
 uniform vec4  uSphere;     // xy centre, z radius (world units)
+uniform vec4  uKeepOut;    // portrait face + shoulders: xy centre (NDC), zw radii (NDC); w = 0 disables
 uniform vec4  uRight;      // placement for roads and body: xy centre, z scale
 uniform vec4  uFull;       // placement for grid and field: xy centre, z half-width, w half-height
 attribute float aSeed;
@@ -114,6 +115,13 @@ void main() {
   float pulse = smoothstep(0.92, 1.0, fract(aAlong * 3.0 - uTime * 0.35 + aSeed * 0.15));
   float flatA = 0.55 + wRoad * pulse * 1.6 - wField * 0.15;
   vAlpha = mix(flatA, sphereA, wSphere) * (0.7 + 0.3 * aSeed) + push * 0.6;
+
+  // Keep-out zone: particles never draw over the face and shoulders in the portrait.
+  if (uKeepOut.w > 0.0) {
+    vec2 ndcP = gl_Position.xy / gl_Position.w;
+    vec2 q = (ndcP - uKeepOut.xy) / uKeepOut.zw;
+    vAlpha *= smoothstep(1.0, 1.35, length(q));
+  }
 
   gl_PointSize = uSize * uPixelRatio * (0.6 + 0.6 * aSeed) * (1.0 / -mv.z);
 }

@@ -7,6 +7,7 @@ import { damp } from "@/lib/cursor";
 import { fibonacciSphere, seeds } from "@/lib/sphere";
 import { CHAPTER_OPACITY, MORPH_INDEX, body, field, grid, roads } from "@/lib/morphTargets";
 import { fragmentShader, vertexShader } from "./shaders";
+import { CAM_Z, FOV, HALF_Y, heroPlacement } from "@/lib/heroPlacement";
 
 type Props = {
   count: number;
@@ -17,20 +18,13 @@ type Props = {
 
 export const CHAPTER_EVENT = "chapterchange";
 const FAR = 99;
-const CAM_Z = 3.4;
-const FOV = 45;
-const HALF_Y = Math.tan((FOV / 2) * (Math.PI / 180)) * CAM_Z;
+
 
 const currentChapter = () => document.documentElement.getAttribute("data-chapter") ?? "warmup";
 
-/** Screen rectangle → world-space placement at z = 0 for the sphere around the portrait. */
-function spherePlacement(halfX: number, w: number, h: number): [number, number, number] {
+function portraitRect() {
   const el = document.getElementById("hero-portrait");
-  if (!el) return [halfX * 0.45, 0.1, HALF_Y * 0.7];
-  const r = el.getBoundingClientRect();
-  const cx = r.left + r.width * 0.5;
-  const cy = r.top + r.height * 0.4; // the face sits in the upper part of the photo
-  return [((cx / w) * 2 - 1) * halfX, -((cy / h) * 2 - 1) * HALF_Y, (r.height / h) * HALF_Y * 1.1];
+  return el ? el.getBoundingClientRect() : null;
 }
 
 function Field({ count, animate }: { count: number; animate: boolean }) {
@@ -62,6 +56,7 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
       uMorph: { value: 0 },
       uRot: { value: 0 },
       uSphere: { value: [0, 0, 1, 0] },
+      uKeepOut: { value: [0, 0, 1, 0] },
       uRight: { value: [0, 0, 1, 0] },
       uFull: { value: [0, 0, 1, 1] },
       uOpacity: { value: 0 },
@@ -121,7 +116,9 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
 
     u.uPixelRatio.value = gl.getPixelRatio();
     u.uSize.value = Math.min(w, h) / 70;
-    u.uSphere.value = [...spherePlacement(halfX, w, h), 0];
+    const hero = heroPlacement(portraitRect(), w, h, halfX);
+    u.uSphere.value = [...hero.sphere, 0];
+    u.uKeepOut.value = hero.keepOut;
     u.uRight.value =
       aspect >= 1 ? [halfX * 0.66, -0.05, HALF_Y * 0.68, 0] : [0, -0.1, halfX * 0.9, 0];
     u.uFull.value = [0, 0, halfX * 1.05, HALF_Y * 1.05];
