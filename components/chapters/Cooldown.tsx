@@ -1,3 +1,4 @@
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { chapterById } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { Eyebrow } from "@/components/ui/SectionHeader";
@@ -31,12 +32,12 @@ export function Cooldown() {
         <ul className="flex flex-wrap gap-6">
           {profile.links.map((l) => (
             <li key={l.href}>
-              <a
+              <ExternalLink
                 href={l.href}
                 className="font-mono text-sm uppercase tracking-[0.08em] text-muted transition-colors hover:text-text"
               >
                 {l.label}
-              </a>
+              </ExternalLink>
             </li>
           ))}
         </ul>

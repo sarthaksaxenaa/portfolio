@@ -1,3 +1,4 @@
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { chapterById } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { prodigy, skillmatrix } from "@/content/projects";
@@ -67,9 +68,9 @@ export function Grind() {
                 Side project · {skillmatrix.stack.join(" · ")}
               </p>
               <h3 className="text-xl font-semibold">
-                <a href={skillmatrix.repoUrl} className="underline-offset-4 hover:underline">
+                <ExternalLink href={skillmatrix.repoUrl} className="underline-offset-4 hover:underline">
                   {skillmatrix.name}
-                </a>
+                </ExternalLink>
               </h3>
               <p className="text-muted">{skillmatrix.summary}</p>
             </article>
