@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-11-15",
+  "measuredAt": "2026-11-16",
   "unit": {
     "passed": 168,
     "total": 168
@@ -9,16 +9,16 @@
     "total": 103
   },
   "lh": {
-    "performance": 81,
+    "performance": 90,
     "accessibility": 100,
     "bestPractices": 100,
     "seo": 100,
-    "lcpMs": 3569,
+    "lcpMs": 3584,
     "cls": 0
   },
   "live": {
     "ok": true,
     "status": 200,
-    "ms": 481
+    "ms": 417
   }
 }
