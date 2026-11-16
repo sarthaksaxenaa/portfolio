@@ -486,6 +486,16 @@ test.describe("opening (first visit)", () => {
     expect(violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""))).toEqual([]);
   });
 
+  test("the 3D scene waits behind the card and starts once it is gone", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    await page.waitForTimeout(1200);
+    await expect(page.getByTestId("scene-layer")).toHaveCount(0);
+    await page.getByTestId("opening-enter").click();
+    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
+    await expect(page.getByTestId("scene-layer")).toHaveCount(1, { timeout: 10_000 });
+  });
+
   test("never shows with motion off or without JavaScript", async ({ browser }) => {
     for (const opts of [{ reducedMotion: "reduce" as const }, { javaScriptEnabled: false }]) {
       const ctx = await browser.newContext(opts);
