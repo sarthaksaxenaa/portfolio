@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Chapters, Decision, Profile, Project, PUBLIC_EMAIL, Stat } from "@/content/schema";
 import { chapters } from "@/content/chapters";
@@ -43,6 +45,18 @@ describe("Decision: at least one road not taken", () => {
 
 describe("Profile and links", () => {
   const base = { ...profile };
+  it("serves the resume as a dated PDF from the site itself", () => {
+    expect(ok(Profile, base)).toBe(true);
+    expect(ok(Profile, { ...base, resume: { ...base.resume, href: "https://drive.google.com/resume" } })).toBe(false);
+    expect(ok(Profile, { ...base, resume: { ...base.resume, href: "/resume.docx" } })).toBe(false);
+    expect(ok(Profile, { ...base, resume: { ...base.resume, updated: "16 Nov 2026" } })).toBe(false);
+  });
+
+  it("ships the resume file it links to, small enough to open instantly", () => {
+    const pdf = readFileSync(join(process.cwd(), "public", profile.resume.href.slice(1)));
+    expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
+    expect(pdf.byteLength).toBeLessThan(400_000);
+  });
   it("only allows the public professional email", () => {
     expect(ok(Profile, { ...base, email: "180917503+sarthaksaxenaa@users.noreply.github.com" })).toBe(false);
     expect(profile.email).toBe(PUBLIC_EMAIL);

@@ -57,6 +57,11 @@ export const Profile = z.object({
     cgpa: z.string().optional(),
   }),
   links: z.array(Link).min(1),
+  /** One-page resume served from /public; `updated` is shown so recruiters know it is current. */
+  resume: z.object({
+    href: z.string().regex(/^\/[\w.-]+\.pdf$/, "Resume must be a PDF served from /public"),
+    updated: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }),
   portrait: z.object({ src: z.string().startsWith("/"), alt: z.string().min(10) }),
 });
 export type Profile = z.infer<typeof Profile>;

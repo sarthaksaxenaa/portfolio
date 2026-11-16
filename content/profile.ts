@@ -17,6 +17,7 @@ export const profile: ProfileT = Profile.parse({
     { label: "LinkedIn", href: "https://www.linkedin.com/in/sarthaksaxenaa/" },
     { label: "LeetCode", href: "https://leetcode.com/u/Sarthxen/" },
   ],
+  resume: { href: "/Sarthak_Saxena_Resume.pdf", updated: "2026-11-16" },
   portrait: {
     src: "/portrait-halftone.webp",
     alt: "Halftone portrait of Sarthak Saxena in a dark suit and glasses",
