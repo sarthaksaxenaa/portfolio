@@ -48,11 +48,12 @@ test("a deep link to a section below the pinned track lands on that section", as
   await expect(page.locator("#carenexus-heading")).toBeInViewport();
 });
 
-test("portrait image loads", async ({ page }) => {
+test("the portrait the particles are sampled from is served", async ({ page, request }) => {
+  const res = await request.get("/portrait-halftone.webp");
+  expect(res.status()).toBe(200);
+  expect(res.headers()["content-type"]).toContain("image/webp");
   await page.goto("/");
-  const img = page.getByRole("img", { name: /portrait of Sarthak Saxena/ });
-  await expect(img).toBeVisible();
-  expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveAccessibleName(/Sarthak Saxena, Software Developer/);
 });
 
 test("canonical URL points at the production domain", async ({ page }) => {
@@ -86,8 +87,8 @@ test.describe("cursor light", () => {
       const bg = await page.locator(sel).evaluate((el) => getComputedStyle(el).backgroundImage);
       expect(bg, sel).toContain("gradient");
     }
-    // The name paints its fill as a gradient clipped to the text.
-    const fill = await page.locator(".hero-name-line").first().evaluate((el) => getComputedStyle(el).backgroundImage);
+    // PORTFOLIO is chrome: a gradient clipped to each letter.
+    const fill = await page.locator(".portfolio-letter").first().evaluate((el) => getComputedStyle(el).backgroundImage);
     expect(fill).toContain("gradient");
   });
 
@@ -310,40 +311,33 @@ test.describe("resume", () => {
   });
 });
 
-test.describe("hero name", () => {
-  const progress = (page: import("@playwright/test").Page) =>
-    page.locator("#warmup-title").evaluate((el) => Number(getComputedStyle(el).getPropertyValue("--name-f")));
-
-  test("loads 0 → 100 like the intro and the name stays solid, with no number beside it", async ({ page }) => {
+test.describe("hero", () => {
+  test("PORTFOLIO forms in chrome letters over the role, and Home is marked in red", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("name-count")).toHaveCount(0);
-    await expect.poll(() => progress(page)).toBeGreaterThan(5);
-    const mid = await progress(page);
-    expect(mid).toBeLessThan(100);
-    await expect.poll(() => progress(page), { timeout: 5000 }).toBe(100);
-    // Fully loaded: the outline layer is masked away across the whole word.
-    const mask = await page
-      .locator('.hero-name-line[data-line="1"]')
-      .evaluate((el) => getComputedStyle(el, "::before").maskImage || getComputedStyle(el, "::before").webkitMaskImage);
-    expect(mask).toMatch(/100%/);
+    const letters = page.locator(".portfolio-letter");
+    await expect(letters).toHaveCount(9);
+    expect((await letters.allTextContents()).join("")).toBe("PORTFOLIO");
+    expect(await letters.first().evaluate((el) => getComputedStyle(el).animationName)).toBe("letter-form");
+    await expect(page.locator(".hero-sub")).toHaveText("Software Developer");
+    const home = page.locator('nav a[data-chapters="warmup"]');
+    await expect(home).toHaveAttribute("aria-current", "location");
+    await expect(home).toHaveCSS("color", "rgb(229, 72, 77)");
   });
 
-  test("no torch: moving the mouse over the name changes nothing", async ({ page }) => {
+  test("the intro sits below in a glass card with the work, email and resume", async ({ page }) => {
     await page.goto("/");
-    await expect.poll(() => progress(page), { timeout: 5000 }).toBe(100);
-    const line = page.locator('.hero-name-line[data-line="0"]');
-    const before = await line.evaluate((el) => getComputedStyle(el).backgroundImage);
-    const box = (await line.boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 6 });
-    await page.waitForTimeout(300);
-    expect(await line.evaluate((el) => getComputedStyle(el).backgroundImage)).toBe(before);
+    await expect(page.getByRole("heading", { name: "Intro" })).toBeAttached();
+    await page.locator("#intro").scrollIntoViewIfNeeded(); // the card reveals as it scrolls in
+    const card = page.locator("#intro .glass");
+    await expect(card).toContainText("Sarthak Saxena");
+    for (const name of ["See the work", "sarthaksaxena413@gmail.com", /Resume/]) await expect(card.getByRole("link", { name })).toBeVisible();
   });
 
-  test("reduced motion gets the solid name straight away", async ({ browser }) => {
+  test("reduced motion gets the finished word straight away", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
     await page.goto("/");
-    expect(await progress(page)).toBe(100);
+    expect(await page.locator(".portfolio-letter").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
     await ctx.close();
   });
 });
@@ -370,22 +364,14 @@ test.describe("particle hero", () => {
     expect(await layer.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
   });
 
-  test("phones load the 3D scene after the first scroll, never before", async ({ browser }) => {
+  test("phones draw the particle portrait without waiting for a touch", async ({ browser }) => {
     const ctx = await browser.newContext({ viewport: { width: 412, height: 823 }, isMobile: true, hasTouch: true });
     await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
     const page = await ctx.newPage();
-    const three: string[] = [];
-    page.on("response", async (r) => {
-      if (r.url().endsWith(".js") && (await r.text().catch(() => "")).includes("WebGLRenderer")) three.push(r.url());
-    });
-    await page.goto("/", { waitUntil: "networkidle" });
-    await page.waitForTimeout(2500); // past load + idle: a desktop would have started by now
-    expect(three).toEqual([]);
-    await page.evaluate(() => window.scrollBy(0, 400));
+    await page.goto("/");
     const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
     test.skip(!webgl, "no WebGL in this browser");
     await expect(page.getByTestId("scene-layer")).toHaveAttribute("data-tier", "low", { timeout: 10_000 });
-    await expect.poll(() => three.length).toBeGreaterThan(0);
     await ctx.close();
   });
 
@@ -412,98 +398,23 @@ test.describe("opening (first visit)", () => {
   const preload = (page: import("@playwright/test").Page) =>
     page.evaluate(() => document.documentElement.getAttribute("data-preload"));
 
-  test("decodes the name to 100, waits, then a scroll flies into the site; a reload skips it", async ({ page, browserName }) => {
+  test("a glowing dot on black bursts into the site on its own; a reload skips it", async ({ page }) => {
     await page.goto("/");
-    const card = page.getByTestId("opening");
-    await expect(card).toBeVisible();
-    await expect(card.locator(".opening-code")).toHaveText("...  .-  .-.  -  ....  .-  -.-");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    expect(await preload(page)).toBe("ready");
-    // It waits for the visitor rather than vanishing on a timer.
-    await page.waitForTimeout(1500);
-    await expect(card).toBeVisible();
-    // The page underneath must not scroll while the card takes the wheel. Playwright's Linux
-    // WebKit does not deliver synthetic wheel input to a page that cannot scroll, so there the
-    // same flight is driven by Page Down; the wheel maths itself is covered by unit tests.
-    await page.mouse.move(700, 450);
-    if (browserName === "webkit") await page.keyboard.press("PageDown");
-    else for (let i = 0; i < 5; i++) await page.mouse.wheel(0, 80);
-    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
-    await expect(card).toBeHidden();
+    await expect(page.getByTestId("opening-dot")).toBeVisible();
+    await expect.poll(() => preload(page), { timeout: 6000 }).toBeNull();
+    await expect(page.getByTestId("opening")).toBeHidden();
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    await page.locator("#intro").scrollIntoViewIfNeeded();
     await page.getByRole("link", { name: "See the work" }).click();
     await page.reload();
     expect(await preload(page)).toBeNull();
-    await expect(card).toBeHidden();
+    await expect(page.getByTestId("opening")).toBeHidden();
   });
 
-  test("a short nudge springs back instead of entering", async ({ page, browserName }) => {
-    test.skip(browserName === "webkit", "synthetic wheel input is not delivered here; see above");
+  test("the page underneath does not scroll while the dot is up", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    await page.mouse.move(700, 450);
-    await page.mouse.wheel(0, 40);
-    await page.waitForTimeout(800);
-    expect(await preload(page)).toBe("ready");
-  });
-
-  test("the cursor stays visible above the card, and the letters light under it", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    const z = await page.evaluate(() => [
-      Number(getComputedStyle(document.querySelector(".opening")!).zIndex),
-      Number(getComputedStyle(document.querySelector(".cursor-ring")!).zIndex),
-    ]);
-    expect(z[1]).toBeGreaterThan(z[0]);
-    const ghost = page.locator("[data-ghost]").nth(2);
-    const box = (await ghost.boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 5 });
-    await expect.poll(() => ghost.evaluate((el) => Number(el.style.getPropertyValue("--lit")))).toBeGreaterThan(0.8);
-  });
-
-  test("keyboard and the button both enter", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    await page.keyboard.press("ArrowDown");
-    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
-
-    await page.evaluate(() => sessionStorage.clear());
-    await page.reload();
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    await page.getByTestId("opening-enter").click();
-    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
-  });
-
-  test("on a phone: a tall card, swipe hint, and a tap enters", async ({ browser }) => {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
-    const page = await ctx.newPage();
-    await page.goto("/");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    const card = (await page.locator(".opening-card").boundingBox())!;
-    expect(card.height).toBeGreaterThan(card.width);
-    await expect(page.locator(".opening-hint-touch")).toBeVisible();
-    await page.getByTestId("opening-enter").tap();
-    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
-    await ctx.close();
-  });
-
-  test("has no serious accessibility violations while it is up", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    const { violations } = await new AxeBuilder({ page }).include(".opening").analyze();
-    expect(violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""))).toEqual([]);
-  });
-
-  test("the 3D scene waits behind the card and starts once it is gone", async ({ page }) => {
-    await page.goto("/");
-    const webgl = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl"));
-    test.skip(!webgl, "no WebGL in this browser: the scene is correctly never drawn");
-    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
-    await page.waitForTimeout(1200);
-    await expect(page.getByTestId("scene-layer")).toHaveCount(0);
-    await page.getByTestId("opening-enter").click();
-    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
-    await expect(page.getByTestId("scene-layer")).toHaveCount(1, { timeout: 10_000 });
+    await expect(page.getByTestId("opening-dot")).toBeVisible();
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).toBe("hidden");
   });
 
   test("never shows with motion off or without JavaScript", async ({ browser }) => {
@@ -532,6 +443,8 @@ test.describe("manifesto and magnetic buttons", () => {
   test("CTA leans toward a nearby mouse and springs back", async ({ page }) => {
     await page.goto("/");
     const cta = page.getByRole("link", { name: "See the work" });
+    await cta.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
     const box = (await cta.boundingBox())!;
     const tx = () => cta.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
     await page.mouse.move(box.x + box.width + 20, box.y + box.height / 2, { steps: 5 });
