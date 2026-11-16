@@ -53,10 +53,10 @@ const scrollTo = (y: number) =>
 const current = () => document.querySelector('[aria-current="location"]')?.getAttribute("href");
 
 describe("ChapterObserver", () => {
-  it("marks no nav link in the hero and leaves glow white", () => {
+  it("marks Home in the hero and leaves the glow white", () => {
     vi.stubGlobal("scrollY", 0);
     render(<Page />);
-    expect(current()).toBeUndefined();
+    expect(current()).toBe("#warmup");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
 

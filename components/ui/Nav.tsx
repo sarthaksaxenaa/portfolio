@@ -1,39 +1,47 @@
 import { navItems } from "@/content/chapters";
 import { profile } from "@/content/profile";
+import { HERO_ROLE } from "@/components/chapters/Warmup";
 import { ExternalLink } from "./ExternalLink";
 
+/** Name in bold capitals on the left, small uppercase links on the right; the section you are
+ *  reading is marked in red (ChapterObserver sets aria-current). */
 export function Nav() {
   return (
     <nav
       aria-label="Sections"
-      className="fixed inset-x-0 top-0 z-40 flex items-center justify-between border-b border-hairline bg-bg/70 px-6 py-3 backdrop-blur-md"
+      className="fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-gradient-to-b from-bg/90 to-transparent px-6 py-4 md:px-10"
     >
-      <a href="#warmup" className="text-sm font-medium tracking-tight text-text">
-        {profile.name}
+      <a href="#warmup" className="flex flex-col leading-none">
+        <span className="font-display text-sm font-extrabold uppercase tracking-[0.18em] text-text md:text-base">
+          {profile.name}
+        </span>
+        <span className="mt-1 font-mono text-[0.6rem] uppercase tracking-[0.3em] text-muted">{HERO_ROLE}</span>
       </a>
-      <ul className="hidden gap-8 md:flex">
-        {navItems.map((item) => (
-          <li key={item.href}>
-            <a
-              href={item.href}
-              data-chapters={item.chapters.join(" ")}
-              className="text-sm text-muted transition-colors hover:text-text"
-            >
-              {item.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-      {/* Keeps the links centred on desktop; holds the resume everywhere and Contact on phones. */}
-      <div className="flex min-w-[7.5rem] items-center justify-end gap-5">
-        <a href="#cooldown" className="text-sm text-muted transition-colors hover:text-text md:hidden">
+      <div className="flex items-center gap-6 md:gap-8">
+        <ul className="hidden gap-7 md:flex">
+          {navItems.map((item) => (
+            <li key={item.href}>
+              <a
+                href={item.href}
+                data-chapters={item.chapters.join(" ")}
+                className="nav-link text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted transition-colors hover:text-text"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <a
+          href="#cooldown"
+          className="text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted transition-colors hover:text-text md:hidden"
+        >
           Contact
         </a>
         <ExternalLink
           href={profile.resume.href}
           data-magnetic
           data-testid="nav-resume"
-          className="rounded-full border border-hairline px-3.5 py-1.5 text-sm text-text transition-colors hover:border-text"
+          className="rounded-full border border-hairline px-3.5 py-1.5 text-[0.7rem] font-medium uppercase tracking-[0.2em] text-text transition-colors hover:border-text"
         >
           Resume
         </ExternalLink>

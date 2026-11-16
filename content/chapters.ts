@@ -15,6 +15,7 @@ export const chapters: Chapter[] = Chapters.parse([
 
 /** Top navigation: standard section names. Projects stays active across both case studies. */
 export const navItems = [
+  { label: "Home", href: "#warmup", chapters: ["warmup"] },
   { label: "Experience", href: "#grind", chapters: ["grind"] },
   { label: "Projects", href: "#rideshare", chapters: ["rideshare", "carenexus"] },
   { label: "Focus", href: "#overload", chapters: ["overload"] },

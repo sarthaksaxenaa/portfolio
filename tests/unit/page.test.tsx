@@ -44,7 +44,8 @@ describe("home page", () => {
     const { container } = render(<Home />);
     const nav = screen.getByRole("navigation", { name: "Sections" });
     expect(within(nav).getAllByRole("link").map((a) => a.textContent)).toEqual([
-      "Sarthak Saxena",
+      "Sarthak SaxenaSoftware Developer",
+      "Home",
       "Experience",
       "Projects",
       "Focus",
