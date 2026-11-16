@@ -408,6 +408,10 @@ test.describe("opening (first visit)", () => {
     expect(await page.locator(".portfolio-letter").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
     await expect(page.getByTestId("opening")).toBeHidden();
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
+    // The mouse wheel scrolls the page again once it is over.
+    await page.mouse.move(640, 400);
+    await page.mouse.wheel(0, 900);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
     await page.locator("#intro").scrollIntoViewIfNeeded();
     await page.getByRole("link", { name: "See the work" }).click();
     await page.reload();
