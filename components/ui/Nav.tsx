@@ -1,5 +1,6 @@
 import { navItems } from "@/content/chapters";
 import { profile } from "@/content/profile";
+import { ExternalLink } from "./ExternalLink";
 
 export function Nav() {
   return (
@@ -23,11 +24,19 @@ export function Nav() {
           </li>
         ))}
       </ul>
-      {/* Keeps the links centred on desktop; on phones it holds the one Contact link. */}
-      <div className="flex min-w-[7.5rem] justify-end">
-        <a href="#cooldown" className="text-sm text-text md:hidden">
+      {/* Keeps the links centred on desktop; holds the resume everywhere and Contact on phones. */}
+      <div className="flex min-w-[7.5rem] items-center justify-end gap-5">
+        <a href="#cooldown" className="text-sm text-muted transition-colors hover:text-text md:hidden">
           Contact
         </a>
+        <ExternalLink
+          href={profile.resume.href}
+          data-magnetic
+          data-testid="nav-resume"
+          className="rounded-full border border-hairline px-3.5 py-1.5 text-sm text-text transition-colors hover:border-text"
+        >
+          Resume
+        </ExternalLink>
       </div>
     </nav>
   );

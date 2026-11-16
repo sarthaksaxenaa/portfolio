@@ -40,6 +40,15 @@ export function Cooldown() {
               </ExternalLink>
             </li>
           ))}
+          <li>
+            <ExternalLink
+              href={profile.resume.href}
+              data-testid="contact-resume"
+              className="font-mono text-sm uppercase tracking-[0.08em] text-muted transition-colors hover:text-text"
+            >
+              Resume (PDF)
+            </ExternalLink>
+          </li>
         </ul>
       </div>
       <footer className="mx-auto mt-24 flex w-full max-w-6xl flex-wrap justify-between gap-4 border-t border-hairline pt-6 font-mono text-xs text-muted">

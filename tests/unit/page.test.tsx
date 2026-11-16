@@ -31,9 +31,13 @@ describe("home page", () => {
     const nav = screen.getByRole("navigation", { name: "Sections" });
     for (const a of within(nav).getAllByRole("link")) {
       const target = a.getAttribute("href")!;
+      if (target.endsWith(".pdf")) continue; // the resume, checked on its own below
       expect(target.startsWith("#")).toBe(true);
       expect(container.querySelector(target)).not.toBeNull();
     }
+    const resume = within(nav).getByRole("link", { name: /resume/i });
+    expect(resume).toHaveAttribute("href", "/Sarthak_Saxena_Resume.pdf");
+    expect(resume).toHaveAttribute("target", "_blank");
   });
 
   it("never shows internal chapter numbers or gym labels in the nav or section eyebrows", () => {
@@ -46,6 +50,7 @@ describe("home page", () => {
       "Focus",
       "Contact",
       "Contact",
+      "Resume (opens in a new tab)",
     ]);
     const visibleLabels = [nav.textContent ?? "", ...[...container.querySelectorAll("header p")].map((p) => p.textContent ?? "")];
     for (const text of visibleLabels) {
