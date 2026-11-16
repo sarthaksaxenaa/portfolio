@@ -162,6 +162,18 @@ describe("Opening", () => {
     expect(state()).toBe("leaving");
   });
 
+  it("reads wheel distance given in lines, not only pixels", async () => {
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    await fontsNow();
+    act(() => flushTo(2300));
+    // 3 lines × 16 px ≈ one notch on a line-based mouse; ten notches is a deliberate scroll.
+    for (let i = 0; i < 10; i++)
+      act(() => void window.dispatchEvent(new WheelEvent("wheel", { deltaY: 3, deltaMode: 1, cancelable: true })));
+    act(() => flushTo(3000));
+    expect(state()).toBe("leaving");
+  });
+
   it("the scroll that drives the card never reaches the page underneath", async () => {
     root.setAttribute("data-preload", "on");
     render(<Opening />);

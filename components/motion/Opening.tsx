@@ -263,7 +263,9 @@ export function Opening() {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation(); // keep smooth scroll from moving the page underneath
-      scrub(e.deltaY / (window.innerHeight * SCRUB_PER_SCREEN));
+      // Some browsers report wheel distance in lines or pages rather than pixels.
+      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+      scrub(px / (window.innerHeight * SCRUB_PER_SCREEN));
     };
     const onTouchStart = (e: TouchEvent) => {
       const t = e.touches[0];
