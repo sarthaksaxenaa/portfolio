@@ -23,8 +23,9 @@ export function placements(width: number, height: number) {
     // Grid: the whole screen.
     full: [0, 0, halfX * 1.05, HALF_Y * 1.05] as Placement,
     // Portrait: centred above the giant word; on phones it fits the width.
+    // The photo's sides are empty black, so on phones it may overflow the width.
     portrait: (landscape
-      ? [0, HALF_Y * 0.2, HALF_Y * 2.1, 0]
-      : [0, HALF_Y * 0.3, Math.min(HALF_Y * 1.4, halfX * 2), 0]) as Placement,
+      ? [0, HALF_Y * 0.1, HALF_Y * 2.5, 0]
+      : [0, HALF_Y * 0.32, Math.min(HALF_Y * 1.5, halfX * 3.2), 0]) as Placement,
   };
 }

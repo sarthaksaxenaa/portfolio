@@ -127,11 +127,14 @@ void main() {
   float sphereA = (0.08 + 0.75 * facing * facing) * (0.45 + 0.55 * band);
   float pulse = smoothstep(0.92, 1.0, fract(aAlong * 3.0 - uTime * 0.35 + aSeed * 0.15));
   float flatA = 0.55 + wRoad * pulse * 1.6;
-  float portraitA = 0.25 + 0.95 * aPortrait.z;
+  // Fine, brightness-scaled dust: density carries the tones, so the face never clips to white.
+  float portraitA = 0.2 + 1.15 * aPortrait.z;
   vAlpha = mix(mix(flatA, portraitA, wPortrait), sphereA, wSphere) * (0.7 + 0.3 * aSeed)
     + push * 0.6 + (1.0 - burst) * 0.5;
 
-  gl_PointSize = uSize * uPixelRatio * (0.6 + 0.6 * aSeed) * (1.0 / -mv.z);
+  float shapeSize = uSize * uPixelRatio * (0.6 + 0.6 * aSeed) * (1.0 / -mv.z);
+  float dustSize = 1.7 * uPixelRatio * (0.7 + 0.6 * aSeed); // ~1.2–2.2 CSS px on every screen
+  gl_PointSize = mix(shapeSize, dustSize, wPortrait);
 }
 `;
 
