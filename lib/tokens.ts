@@ -11,6 +11,7 @@ export const color = {
   text: "#EDEDED",
   muted: "#8B8B93",
   accent: "#FFFFFF",
+  signal: "#E5484D", // the one red: the active nav link and tiny details
 } as const;
 
 export type ColorToken = keyof typeof color;
@@ -31,6 +32,7 @@ export const contrastPairs: ReadonlyArray<{
   { fg: "muted", bg: "surface2", min: 4.5 },
   { fg: "muted", bg: "surface3", min: 4.5 },
   { fg: "accent", bg: "bg", min: 7 },
+  { fg: "signal", bg: "bg", min: 4.5 },
 ];
 
 const HEX = /^#([0-9a-f]{6})$/i;
