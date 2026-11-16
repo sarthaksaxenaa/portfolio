@@ -146,6 +146,8 @@ export function Opening() {
       window.setTimeout(() => {
         root.removeAttribute("data-preload");
         window.scrollTo(0, 0);
+        // The page's scrollbar returns with the card gone: let scroll-linked layout re-measure.
+        window.dispatchEvent(new Event("resize"));
       }, 500);
     };
 
@@ -205,7 +207,10 @@ export function Opening() {
       if (phase === "loading") {
         const t = now - start;
         const done = (fontsReady && t >= MIN_MS) || t >= MAX_MS;
-        count = done ? count + Math.max(4, (100 - count) * 0.3) : Math.min(90, 100 * (1 - Math.exp(-t / 450)));
+        // Catch-up is time-based, so it finishes on schedule even when frames come slowly.
+        count = done
+          ? count + Math.max(240 * dt, (100 - count) * (1 - Math.exp(-18 * dt)))
+          : Math.min(90, 100 * (1 - Math.exp(-t / 450)));
         const value = Math.min(100, Math.round(count));
         if (countRef.current) countRef.current.textContent = String(value).padStart(2, "0");
         if (value >= 100) {
