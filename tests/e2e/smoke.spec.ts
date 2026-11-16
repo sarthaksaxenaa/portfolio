@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-// The first-visit preloader is tested on its own; everywhere else, act like a returning visitor.
+// The first-visit opening is tested on its own; everywhere else, act like a returning visitor.
 test.beforeEach(async ({ page }, info) => {
-  if (!info.titlePath.some((t) => t.includes("preloader"))) {
+  if (!info.titlePath.some((t) => t.includes("opening"))) {
     await page.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
   }
 });
@@ -391,18 +391,86 @@ test.describe("particle hero", () => {
   });
 });
 
-test.describe("preloader", () => {
-  test("plays on the first visit, gets out of the way, and is skipped on reload", async ({ page }) => {
+test.describe("opening (first visit)", () => {
+  const preload = (page: import("@playwright/test").Page) =>
+    page.evaluate(() => document.documentElement.getAttribute("data-preload"));
+
+  test("decodes the name to 100, waits, then a scroll flies into the site; a reload skips it", async ({ page }) => {
     await page.goto("/");
-    const pre = page.getByTestId("preloader");
-    await expect(pre).toBeVisible();
-    await expect(page.locator("html")).not.toHaveAttribute("data-preload", /.+/, { timeout: 5000 });
-    await expect(pre).toBeHidden();
-    // The page underneath is usable as soon as it lifts.
+    const card = page.getByTestId("opening");
+    await expect(card).toBeVisible();
+    await expect(card.locator(".opening-code")).toHaveText("...  .-  .-.  -  ....  .-  -.-");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    expect(await preload(page)).toBe("ready");
+    // It waits for the visitor rather than vanishing on a timer.
+    await page.waitForTimeout(1500);
+    await expect(card).toBeVisible();
+    // The page underneath must not scroll while the card takes the wheel.
+    await page.mouse.move(700, 450);
+    for (let i = 0; i < 5; i++) await page.mouse.wheel(0, 80);
+    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
+    await expect(card).toBeHidden();
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await page.getByRole("link", { name: "See the work" }).click();
     await page.reload();
-    await expect(page.locator("html")).not.toHaveAttribute("data-preload", /.+/);
-    await expect(pre).toBeHidden();
+    expect(await preload(page)).toBeNull();
+    await expect(card).toBeHidden();
+  });
+
+  test("a short nudge springs back instead of entering", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    await page.mouse.move(700, 450);
+    await page.mouse.wheel(0, 40);
+    await page.waitForTimeout(800);
+    expect(await preload(page)).toBe("ready");
+  });
+
+  test("the cursor stays visible above the card, and the letters light under it", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    const z = await page.evaluate(() => [
+      Number(getComputedStyle(document.querySelector(".opening")!).zIndex),
+      Number(getComputedStyle(document.querySelector(".cursor-ring")!).zIndex),
+    ]);
+    expect(z[1]).toBeGreaterThan(z[0]);
+    const ghost = page.locator("[data-ghost]").nth(2);
+    const box = (await ghost.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 5 });
+    await expect.poll(() => ghost.evaluate((el) => Number(el.style.getPropertyValue("--lit")))).toBeGreaterThan(0.8);
+  });
+
+  test("keyboard and the button both enter", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    await page.keyboard.press("ArrowDown");
+    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
+
+    await page.evaluate(() => sessionStorage.clear());
+    await page.reload();
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    await page.getByTestId("opening-enter").click();
+    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
+  });
+
+  test("on a phone: a tall card, swipe hint, and a tap enters", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    const card = (await page.locator(".opening-card").boundingBox())!;
+    expect(card.height).toBeGreaterThan(card.width);
+    await expect(page.locator(".opening-hint-touch")).toBeVisible();
+    await page.getByTestId("opening-enter").tap();
+    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
+    await ctx.close();
+  });
+
+  test("has no serious accessibility violations while it is up", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("opening-count")).toHaveText("100", { timeout: 5000 });
+    const { violations } = await new AxeBuilder({ page }).include(".opening").analyze();
+    expect(violations.filter((v) => ["serious", "critical"].includes(v.impact ?? ""))).toEqual([]);
   });
 
   test("never shows with motion off or without JavaScript", async ({ browser }) => {
@@ -410,7 +478,7 @@ test.describe("preloader", () => {
       const ctx = await browser.newContext(opts);
       const page = await ctx.newPage();
       await page.goto("/");
-      await expect(page.getByTestId("preloader")).toBeHidden();
+      await expect(page.getByTestId("opening")).toBeHidden();
       await ctx.close();
     }
   });
