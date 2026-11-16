@@ -269,6 +269,30 @@ test.describe("accessibility", () => {
   });
 });
 
+test.describe("resume", () => {
+  test("the nav and contact both link the one-page PDF, opening in a new tab", async ({ page, request }) => {
+    await page.goto("/");
+    for (const id of ["nav-resume", "contact-resume"]) {
+      const link = page.getByTestId(id);
+      await expect(link).toHaveAttribute("href", "/Sarthak_Saxena_Resume.pdf");
+      await expect(link).toHaveAttribute("target", "_blank");
+      await expect(link).toHaveAttribute("rel", /noopener/);
+    }
+    await expect(page.getByTestId("nav-resume")).toBeVisible();
+    const res = await request.get("/Sarthak_Saxena_Resume.pdf");
+    expect(res.status()).toBe(200);
+    expect(res.headers()["content-type"]).toContain("application/pdf");
+  });
+
+  test("the resume button is reachable on a phone too", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByTestId("nav-resume")).toBeVisible();
+    await ctx.close();
+  });
+});
+
 test.describe("hero name", () => {
   const progress = (page: import("@playwright/test").Page) =>
     page.locator("#warmup-title").evaluate((el) => Number(getComputedStyle(el).getPropertyValue("--name-f")));
