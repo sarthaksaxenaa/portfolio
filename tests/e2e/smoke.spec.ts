@@ -398,10 +398,14 @@ test.describe("opening (first visit)", () => {
   const preload = (page: import("@playwright/test").Page) =>
     page.evaluate(() => document.documentElement.getAttribute("data-preload"));
 
-  test("a glowing dot on black bursts into the site on its own; a reload skips it", async ({ page }) => {
+  test("plays dot → name → PORTFOLIO → reveal on its own, lands on the hero word; a reload skips it", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("opening-dot")).toBeVisible();
-    await expect.poll(() => preload(page), { timeout: 6000 }).toBeNull();
+    await expect(page.getByTestId("opening")).toBeVisible();
+    await expect.poll(() => preload(page)).toBe("loading");
+    await expect.poll(() => preload(page), { timeout: 12_000 }).toBe("burst");
+    await expect.poll(() => preload(page), { timeout: 5000 }).toBeNull();
+    // The canvas already formed the word, so the page's own letters do not animate again.
+    expect(await page.locator(".portfolio-letter").first().evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
     await expect(page.getByTestId("opening")).toBeHidden();
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await page.locator("#intro").scrollIntoViewIfNeeded();
@@ -411,9 +415,17 @@ test.describe("opening (first visit)", () => {
     await expect(page.getByTestId("opening")).toBeHidden();
   });
 
-  test("the page underneath does not scroll while the dot is up", async ({ page }) => {
+  test("a click skips straight to the glide and the page arrives within about two seconds", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByTestId("opening-dot")).toBeVisible();
+    await expect.poll(() => preload(page)).toBe("loading");
+    await page.waitForTimeout(600);
+    await page.mouse.click(640, 360);
+    await expect.poll(() => preload(page), { timeout: 3000 }).toBeNull();
+  });
+
+  test("the page underneath does not scroll while the opening plays", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("opening")).toBeVisible();
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).overflow)).toBe("hidden");
   });
 
