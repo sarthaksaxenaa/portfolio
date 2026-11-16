@@ -2,7 +2,8 @@ import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRELOAD_KEY, motionBootScript, preloadBootScript, shouldPreload } from "@/lib/motion";
 import { Opening } from "@/components/motion/Opening";
-import { SCENE_READY_EVENT } from "@/lib/sceneEvents";
+import { Warmup } from "@/components/chapters/Warmup";
+import { START, TOTAL_MS } from "@/lib/openingTimeline";
 
 const root = document.documentElement;
 
@@ -41,33 +42,60 @@ describe("preload boot script", () => {
 
 describe("Opening", () => {
   let now = 0;
-  let resolveFonts: () => void = () => {};
+  let frames: FrameRequestCallback[] = [];
   const state = () => root.getAttribute("data-preload");
-  const fontsNow = async () =>
-    act(async () => {
-      resolveFonts();
-      await Promise.resolve();
-    });
-  const sceneReady = () => act(() => void window.dispatchEvent(new Event(SCENE_READY_EVENT)));
-  const advance = (ms: number) =>
+  /** A canvas context that accepts every call and measures every glyph as 50 px wide. */
+  const fakeCtx = () =>
+    new Proxy(
+      {},
+      {
+        get: (_, key) => {
+          if (key === "measureText") return () => ({ width: 50, fontBoundingBoxAscent: 80, fontBoundingBoxDescent: 20 });
+          if (key === "createLinearGradient" || key === "createRadialGradient") return () => ({ addColorStop() {} });
+          return () => {};
+        },
+        set: () => true,
+      },
+    );
+  const run = (until: number) =>
     act(() => {
-      now += ms;
-      vi.advanceTimersByTime(ms);
+      while (now < until) {
+        now += 16;
+        const batch = frames;
+        frames = [];
+        batch.forEach((cb) => cb(now));
+        vi.advanceTimersByTime(16);
+      }
     });
+  const story = async () => {
+    root.setAttribute("data-preload", "on");
+    render(
+      <>
+        <Warmup />
+        <Opening />
+      </>,
+    );
+    await act(async () => {
+      await Promise.resolve(); // fonts ready
+    });
+  };
 
   beforeEach(() => {
     vi.useFakeTimers();
     now = 0;
+    frames = [];
     vi.spyOn(performance, "now").mockImplementation(() => now);
-    Object.defineProperty(document, "fonts", {
-      configurable: true,
-      value: { ready: new Promise<void>((r) => (resolveFonts = r)) },
-    });
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => frames.push(cb));
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => fakeCtx() as never);
+    Object.defineProperty(document, "fonts", { configurable: true, value: { ready: Promise.resolve() } });
   });
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     root.removeAttribute("data-preload");
+    root.removeAttribute("data-opened");
     sessionStorage.clear();
   });
 
@@ -76,43 +104,52 @@ describe("Opening", () => {
     expect(state()).toBeNull();
   });
 
-  it("is one glowing dot on black, hidden from assistive tech", () => {
+  it("starts with a dot on black, hidden from assistive tech", () => {
     render(<Opening />);
     expect(screen.getByTestId("opening")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByTestId("opening-dot")).toBeInTheDocument();
   });
 
-  it("pulses until fonts and the particle portrait are both ready, then bursts and lifts", async () => {
-    root.setAttribute("data-preload", "on");
-    render(<Opening />);
+  it("plays the whole story, reveals the page, then leaves and remembers it played", async () => {
+    await story();
     expect(state()).toBe("loading");
-    await fontsNow();
-    advance(1500);
-    expect(state()).toBe("loading"); // the portrait is not ready yet
-    sceneReady();
-    expect(state()).toBe("burst");
+    run(START.reveal - 50);
+    expect(state()).toBe("loading"); // dot, pen, name, flip, glide: still on black
+    run(START.reveal + 50);
+    expect(state()).toBe("burst"); // the black lifts and the particles gather
+    run(TOTAL_MS + 100);
+    expect(state()).toBeNull();
+    expect(root).toHaveAttribute("data-opened");
     expect(sessionStorage.getItem(PRELOAD_KEY)).toBe("1");
-    advance(1000);
+  });
+
+  it("a click skips straight to the glide", async () => {
+    await story();
+    run(800);
+    act(() => void window.dispatchEvent(new Event("pointerdown")));
+    run(800 + (START.reveal - START.settle) + 50);
+    expect(state()).toBe("burst");
+    run(800 + (TOTAL_MS - START.settle) + 100);
     expect(state()).toBeNull();
   });
 
-  it("never bursts before the minimum time, even when everything is ready at once", async () => {
-    root.setAttribute("data-preload", "on");
-    render(<Opening />);
-    await fontsNow();
-    sceneReady();
-    expect(state()).toBe("loading");
-    advance(1100);
-    expect(state()).toBe("burst");
+  it("the wheel skips without scrolling the page underneath", async () => {
+    await story();
+    run(500);
+    const behind = vi.fn();
+    window.addEventListener("wheel", behind);
+    const e = new WheelEvent("wheel", { deltaY: 80, cancelable: true, bubbles: true });
+    act(() => void document.body.dispatchEvent(e));
+    expect(e.defaultPrevented).toBe(true);
+    expect(behind).not.toHaveBeenCalled();
+    window.removeEventListener("wheel", behind);
   });
 
-  it("never waits longer than 3.2 s, even if the 3D scene never arrives", () => {
+  it("gets out of the way at once when there is no canvas or no hero word to land on", () => {
     root.setAttribute("data-preload", "on");
-    render(<Opening />);
-    advance(3100);
-    expect(state()).toBe("loading");
-    advance(150);
-    expect(state()).toBe("burst");
+    render(<Opening />); // no Warmup: nothing to land on
+    expect(state()).toBeNull();
+    expect(root).toHaveAttribute("data-opened");
   });
 
   it("hydrating after the 3 s safety net skips the opening instead of reappearing", () => {
