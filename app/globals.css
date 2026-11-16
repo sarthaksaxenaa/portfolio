@@ -331,6 +331,10 @@ html[data-preload] {
     opacity: 1;
   }
 }
+/* In flight the card scales up to 7x: drop the big blurred shadow, the costliest thing to repaint. */
+html[data-preload="leaving"] .opening-card {
+  box-shadow: none;
+}
 .opening-card {
   position: relative;
   display: flex;

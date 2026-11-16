@@ -148,6 +148,19 @@ describe("Opening", () => {
     expect(state()).toBeNull();
   });
 
+  it("leaves on time even if animation frames stall after committing", async () => {
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    await fontsNow();
+    act(() => flushTo(2300));
+    fireEvent.click(screen.getByTestId("opening-enter"));
+    frames = []; // a starved device: no more frames arrive
+    act(() => vi.advanceTimersByTime(1600));
+    expect(screen.getByTestId("opening")).toHaveClass("is-gone");
+    act(() => vi.advanceTimersByTime(600));
+    expect(state()).toBeNull();
+  });
+
   it("a short scroll springs back; a long one commits", async () => {
     root.setAttribute("data-preload", "on");
     render(<Opening />);

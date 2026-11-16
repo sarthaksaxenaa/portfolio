@@ -22,6 +22,7 @@ const FAILSAFE_MS = 2900; // the CSS safety net hides the card at 3 s; arriving 
 const SCRUB_PER_SCREEN = 0.9; // one screen of wheel or swipe flies most of the way
 const SETTLE_AFTER_MS = 180;
 const LIGHT_HOLD_MS = 1200;
+const EXIT_MAX_MS = 1600; // the flight takes ~1.3 s; this is the latest the card may still be up
 const DECODE_END = 116; // by here every letter has flared and settled to its resting glow
 
 const code = encode(WORD);
@@ -129,18 +130,22 @@ export function Opening() {
     let last = 0;
     let gone = false;
 
+    let exitTimer = 0;
     const commit = () => {
       if (phase === "leaving") return;
       phase = "leaving";
       target = 1;
       // The name starts loading underneath while the card flies away.
       root.setAttribute("data-preload", "leaving");
+      // Never hold the visitor at the door: if frames stall on a slow device, leave on time anyway.
+      exitTimer = window.setTimeout(finish, EXIT_MAX_MS);
       wake();
     };
 
     const finish = () => {
       if (gone) return;
       gone = true;
+      window.clearTimeout(exitTimer);
       remember();
       stage.classList.add("is-gone");
       window.setTimeout(() => {
@@ -320,6 +325,7 @@ export function Opening() {
 
     return () => {
       cancelAnimationFrame(raf);
+      window.clearTimeout(exitTimer);
       window.removeEventListener("wheel", onWheel, opts);
       window.removeEventListener("touchstart", onTouchStart, { capture: true });
       window.removeEventListener("touchmove", onTouchMove, opts);
