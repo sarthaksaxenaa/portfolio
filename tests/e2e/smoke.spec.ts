@@ -49,7 +49,7 @@ test("a deep link to a section below the pinned track lands on that section", as
 });
 
 test("the portrait the particles are sampled from is served", async ({ page, request }) => {
-  const res = await request.get("/portrait-halftone.webp");
+  const res = await request.get("/portrait-particles.webp");
   expect(res.status()).toBe(200);
   expect(res.headers()["content-type"]).toContain("image/webp");
   await page.goto("/");
