@@ -47,3 +47,23 @@ export function startDeferred(cb: () => void, { eager = false }: { eager?: boole
     alive = false;
   };
 }
+
+/**
+ * Runs `cb` once the first-visit opening card is gone (at once if there is none). Heavy work
+ * such as the 3D scene waits behind the card instead of competing with it for the main thread.
+ * Returns a cancel function.
+ */
+export function afterOpening(cb: () => void): () => void {
+  const root = document.documentElement;
+  if (!root.hasAttribute("data-preload")) {
+    cb();
+    return () => {};
+  }
+  const mo = new MutationObserver(() => {
+    if (root.hasAttribute("data-preload")) return;
+    mo.disconnect();
+    cb();
+  });
+  mo.observe(root, { attributes: true, attributeFilter: ["data-preload"] });
+  return () => mo.disconnect();
+}

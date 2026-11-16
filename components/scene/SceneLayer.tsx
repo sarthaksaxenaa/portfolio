@@ -4,10 +4,11 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { DPR_CAP, PARTICLES, detectTier, readHints, type Tier } from "@/lib/deviceTier";
 import { useMotion } from "@/components/motion/MotionProvider";
-import { startDeferred } from "@/lib/schedule";
+import { afterOpening, startDeferred } from "@/lib/schedule";
 
 // three.js and the shaders only download after the page is interactive, never on the server.
 // Phones start on the first touch or scroll: the hero has no particles, so nothing is missing before then.
+// On a first visit, nothing starts until the opening card is gone.
 const ParticleField = dynamic(() => import("./ParticleField"), { ssr: false });
 
 /**
@@ -22,10 +23,14 @@ export function SceneLayer() {
   useEffect(() => {
     let alive = true;
     const start = () => alive && setTier(detectTier(readHints()));
-    const stop = startDeferred(start);
+    // Behind the first-visit opening card the scene would be invisible anyway; starting it
+    // there only slows the card on weak devices. Wait for the card, then the usual deferral.
+    let stopDeferred = () => {};
+    const stopWaiting = afterOpening(() => (stopDeferred = startDeferred(start)));
     return () => {
       alive = false;
-      stop();
+      stopWaiting();
+      stopDeferred();
     };
   }, []);
 

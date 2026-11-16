@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { onFirstInteraction, startDeferred } from "@/lib/schedule";
+import { afterOpening, onFirstInteraction, startDeferred } from "@/lib/schedule";
 
 function setPhone(phone: boolean) {
   vi.stubGlobal("matchMedia", (q: string) => ({ matches: phone && q.includes("coarse"), media: q }));
@@ -73,6 +73,40 @@ describe("startDeferred", () => {
     const cb = vi.fn();
     startDeferred(cb)();
     pending?.();
+    expect(cb).not.toHaveBeenCalled();
+  });
+});
+
+describe("afterOpening", () => {
+  afterEach(() => document.documentElement.removeAttribute("data-preload"));
+
+  it("runs at once when there is no opening card", () => {
+    const cb = vi.fn();
+    afterOpening(cb);
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits through every opening state and runs once the card is gone", async () => {
+    const root = document.documentElement;
+    root.setAttribute("data-preload", "loading");
+    const cb = vi.fn();
+    afterOpening(cb);
+    root.setAttribute("data-preload", "ready");
+    root.setAttribute("data-preload", "leaving");
+    await Promise.resolve();
+    expect(cb).not.toHaveBeenCalled();
+    root.removeAttribute("data-preload");
+    await Promise.resolve();
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it("never runs once cancelled", async () => {
+    const root = document.documentElement;
+    root.setAttribute("data-preload", "ready");
+    const cb = vi.fn();
+    afterOpening(cb)();
+    root.removeAttribute("data-preload");
+    await Promise.resolve();
     expect(cb).not.toHaveBeenCalled();
   });
 });
