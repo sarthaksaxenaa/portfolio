@@ -1,7 +1,8 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRELOAD_KEY, motionBootScript, preloadBootScript, shouldPreload } from "@/lib/motion";
-import { Preloader } from "@/components/motion/Preloader";
+import { Opening } from "@/components/motion/Opening";
+import { fireEvent } from "@testing-library/react";
 
 const root = document.documentElement;
 
@@ -38,7 +39,7 @@ describe("preload boot script", () => {
   });
 });
 
-describe("Preloader", () => {
+describe("Opening", () => {
   let frames: FrameRequestCallback[] = [];
   let now = 0;
   let resolveFonts: () => void = () => {};
@@ -50,12 +51,26 @@ describe("Preloader", () => {
       batch.forEach((cb) => cb(now));
     }
   };
+  const state = () => root.getAttribute("data-preload");
+  const lit = () =>
+    screen
+      .getByTestId("opening")
+      .querySelectorAll<HTMLElement>("[data-ghost]")
+      .values()
+      .map((g) => Number(g.style.getPropertyValue("--lit") || 0))
+      .toArray();
+  const fontsNow = async () =>
+    act(async () => {
+      resolveFonts();
+      await Promise.resolve();
+    });
 
   beforeEach(() => {
     vi.useFakeTimers();
     frames = [];
     now = 0;
     vi.spyOn(performance, "now").mockImplementation(() => now);
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => frames.push(cb));
     vi.stubGlobal("cancelAnimationFrame", () => {});
     Object.defineProperty(document, "fonts", {
@@ -72,43 +87,107 @@ describe("Preloader", () => {
   });
 
   it("does nothing when the boot script did not ask for it", () => {
-    render(<Preloader />);
+    render(<Opening />);
     expect(frames).toHaveLength(0);
+    expect(state()).toBeNull();
   });
 
-  it("holds at 90 until fonts are ready, then finishes and remembers it played", async () => {
+  it("spells SARTHAK in Morse on the card", () => {
+    render(<Opening />);
+    expect(screen.getByTestId("opening").querySelector(".opening-code")?.textContent).toBe("...  .-  .-.  -  ....  .-  -.-");
+    expect(screen.getByRole("button", { name: /enter/i })).toBeInTheDocument();
+  });
+
+  it("decodes the letters in order while counting, holding at 90 until fonts are ready", async () => {
     root.setAttribute("data-preload", "on");
-    render(<Preloader />);
+    render(<Opening />);
+    expect(state()).toBe("loading");
+    act(() => flushTo(600));
+    const early = lit();
+    expect(early[0]).toBeGreaterThan(0); // S is decoding…
+    expect(early[6]).toBe(0); // …K has not started
     act(() => flushTo(2000));
-    expect(screen.getByTestId("preloader")).toHaveTextContent("90");
-    expect(root.getAttribute("data-preload")).toBe("on");
+    expect(screen.getByTestId("opening-count")).toHaveTextContent("90");
+    expect(state()).toBe("loading");
+    await fontsNow();
+    act(() => flushTo(2300));
+    expect(screen.getByTestId("opening-count")).toHaveTextContent("100");
+    expect(state()).toBe("ready");
+    act(() => flushTo(3500));
+    // Every letter now rests at a faint glow, so the whole name reads behind the lines.
+    for (const l of lit()) expect(l).toBeCloseTo(0.22, 2);
+  });
 
-    await act(async () => {
-      resolveFonts();
-      await Promise.resolve();
-    });
-    act(() => flushTo(2200));
-    expect(root.getAttribute("data-preload")).toBe("done");
+  it("never counts longer than 2.5 s, even if fonts never load", () => {
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    act(() => flushTo(2700));
+    expect(state()).toBe("ready");
+  });
+
+  it("then waits for the visitor instead of disappearing on its own", async () => {
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    await fontsNow();
+    act(() => flushTo(3000));
+    act(() => vi.advanceTimersByTime(20_000));
+    expect(state()).toBe("ready");
+  });
+
+  it("the enter button flies into the site and remembers it played", async () => {
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    await fontsNow();
+    act(() => flushTo(2300));
+    fireEvent.click(screen.getByTestId("opening-enter"));
+    expect(state()).toBe("leaving");
+    act(() => flushTo(6000));
+    expect(screen.getByTestId("opening")).toHaveClass("is-gone");
     expect(sessionStorage.getItem(PRELOAD_KEY)).toBe("1");
-    act(() => vi.advanceTimersByTime(1000));
-    expect(root.hasAttribute("data-preload")).toBe(false);
+    act(() => vi.advanceTimersByTime(600));
+    expect(state()).toBeNull();
   });
 
-  it("never holds the page longer than 2.5 s, even if fonts never load", () => {
+  it("a short scroll springs back; a long one commits", async () => {
     root.setAttribute("data-preload", "on");
-    render(<Preloader />);
-    act(() => flushTo(2600));
-    expect(root.getAttribute("data-preload")).toBe("done");
+    render(<Opening />);
+    await fontsNow();
+    act(() => flushTo(2300));
+    const wheel = (dy: number) => act(() => void window.dispatchEvent(new WheelEvent("wheel", { deltaY: dy, cancelable: true })));
+    wheel(window.innerHeight * 0.1);
+    act(() => flushTo(3000));
+    expect(state()).toBe("ready");
+    wheel(window.innerHeight * 0.4);
+    act(() => flushTo(3600));
+    expect(state()).toBe("leaving");
   });
 
-  it("does not finish before the minimum time even if fonts are instant", async () => {
+  it("the scroll that drives the card never reaches the page underneath", async () => {
     root.setAttribute("data-preload", "on");
-    render(<Preloader />);
-    await act(async () => {
-      resolveFonts();
-      await Promise.resolve();
-    });
-    act(() => flushTo(500));
-    expect(root.getAttribute("data-preload")).toBe("on");
+    render(<Opening />);
+    const behind = vi.fn();
+    window.addEventListener("wheel", behind);
+    const e = new WheelEvent("wheel", { deltaY: 40, cancelable: true, bubbles: true });
+    act(() => void document.body.dispatchEvent(e));
+    expect(e.defaultPrevented).toBe(true);
+    expect(behind).not.toHaveBeenCalled();
+    window.removeEventListener("wheel", behind);
+  });
+
+  it("keyboard: arrow down enters", async () => {
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    act(() => flushTo(2700));
+    act(() => void window.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", cancelable: true })));
+    expect(state()).toBe("leaving");
+  });
+
+  it("hydrating after the 3 s safety net skips the opening instead of reappearing", () => {
+    now = 3500;
+    root.setAttribute("data-preload", "on");
+    render(<Opening />);
+    expect(state()).toBeNull();
+    expect(sessionStorage.getItem(PRELOAD_KEY)).toBe("1");
+    expect(frames).toHaveLength(0);
   });
 });

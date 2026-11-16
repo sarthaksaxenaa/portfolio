@@ -97,7 +97,7 @@ html[data-cursor-visible="true"] .cursor-layers > * {
 .cursor-ring {
   top: 0;
   left: 0;
-  z-index: 60;
+  z-index: 110; /* above the opening card, so the pointer never disappears */
   width: 34px;
   height: 34px;
   margin: -17px 0 0 -17px;
@@ -119,7 +119,7 @@ html[data-cursor-hover] .cursor-ring::after {
 .cursor-dot {
   top: 0;
   left: 0;
-  z-index: 61;
+  z-index: 111;
   width: 6px;
   height: 6px;
   margin: -3px 0 0 -3px;
@@ -140,7 +140,7 @@ html[data-cursor-mode="full"][data-cursor-visible="true"] button {
 .cursor-ripple {
   top: 0;
   left: 0;
-  z-index: 60;
+  z-index: 110;
   width: 24px;
   height: 24px;
   margin: -12px 0 0 -12px;
@@ -276,27 +276,29 @@ html[data-cursor="on"] .is-pinned .light-card::after {
 
 /* ───────────── Extras (v0.8) ───────────── */
 
-/* Preloader: exists only when the boot script set data-preload (motion on, first visit). */
-.preloader {
+/* Opening: the name in Morse code as lines of light, shown only when the boot script set
+   data-preload (motion on, first visit). States: on (boot) → loading → ready → leaving. */
+.opening {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: none;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 2rem 1.5rem;
+  align-items: center;
+  justify-content: center;
+  perspective: 1200px;
+  overflow: hidden;
   background: var(--color-bg);
-  transition: clip-path 800ms cubic-bezier(0.76, 0, 0.24, 1);
-  clip-path: inset(0 0 0 0);
+  transition: opacity 500ms ease;
 }
-html[data-preload] .preloader {
+html[data-preload] .opening {
   display: flex;
 }
-html[data-preload="done"] .preloader {
-  clip-path: inset(0 0 100% 0); /* shutter lifts */
+.opening.is-gone {
+  opacity: 0;
+  pointer-events: none;
 }
-/* Safety net: even if scripts never run, the preloader is gone at 3 s. */
-html[data-preload="on"] .preloader {
+/* Safety net: even if scripts never run, the opening is gone at 3 s. */
+html[data-preload="on"] .opening {
   animation: preload-failsafe 0s 3s forwards;
 }
 @keyframes preload-failsafe {
@@ -304,22 +306,151 @@ html[data-preload="on"] .preloader {
     visibility: hidden;
   }
 }
-.preloader-count {
-  font-size: clamp(5rem, 22vw, 18rem);
+/* Nothing behind the opening scrolls while it is up. */
+html[data-preload] {
+  overflow: hidden;
+}
+.opening-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.opening-stars > i {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: opening-twinkle 3s ease-in-out infinite;
+}
+@keyframes opening-twinkle {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.opening-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(86vw, 1100px);
+  aspect-ratio: 16 / 9;
+  max-height: 82svh;
+  padding: clamp(1rem, 2.4vw, 1.75rem);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 20px;
+  background: rgb(10 10 12 / 0.97);
+  box-shadow:
+    0 48px 120px rgb(0 0 0 / 0.85),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+/* Phones held upright: a tall card so the lines have room. */
+@media (max-aspect-ratio: 3 / 4) {
+  .opening-card {
+    width: 88vw;
+    aspect-ratio: auto;
+    height: 64svh;
+  }
+}
+.opening-label {
+  margin: 0;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
+  text-align: center;
+  font-size: 0.6875rem;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.55);
+}
+.opening-field {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0.6rem 0;
+}
+.opening-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* The letter behind each group of lines, surfacing as they light up. */
+.opening-ghost {
+  --lit: 0;
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
+  font-size: clamp(1.75rem, 5vw, 4rem);
   font-weight: 700;
-  line-height: 0.8;
-  letter-spacing: -0.04em;
+  color: #fff;
+  opacity: calc(var(--lit) * 0.85);
+  filter: blur(calc((1 - var(--lit)) * 6px));
+  text-shadow: 0 0 calc(var(--lit) * 28px) rgb(255 255 255 / 0.35);
+  pointer-events: none;
+}
+.opening-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.5);
+}
+.opening-count {
+  display: inline-flex;
+  gap: 0.75em;
   font-variant-numeric: tabular-nums;
 }
-.preloader-label {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-muted);
+.opening-count > span:first-child {
+  color: #fff;
 }
-/* Nothing behind the preloader should scroll while it is up. */
-html[data-preload="on"] {
-  overflow: hidden;
+.opening-state::after {
+  content: "Decoding";
+}
+html[data-preload="ready"] .opening-state::after,
+html[data-preload="leaving"] .opening-state::after {
+  content: "Decoded";
+}
+.opening-code {
+  letter-spacing: 0.3em;
+  white-space: pre;
+}
+@media (max-width: 640px) {
+  .opening-code {
+    display: none;
+  }
+}
+.opening-enter {
+  padding: 0.5rem 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: rgb(255 255 255 / 0.75);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 200ms ease;
+}
+.opening-enter:hover,
+.opening-enter:focus-visible {
+  color: #fff;
+}
+.opening-hint-touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .opening-hint-fine {
+    display: none;
+  }
+  .opening-hint-touch {
+    display: inline;
+  }
 }
 
 [data-magnetic] {
@@ -341,7 +472,7 @@ html[data-preload="on"] {
 .hero-name {
   --name-f: 100;
 }
-html[data-motion="on"]:not([data-preload="on"]) .hero-name {
+html[data-motion="on"]:is(:not([data-preload]), [data-preload="leaving"]) .hero-name {
   /* Same shape as the intro: quick to the 80s, a short hold in the 90s, then 100. */
   animation: name-load 2.2s linear 0.15s both;
 }

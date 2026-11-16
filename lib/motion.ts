@@ -20,14 +20,14 @@ export const motionBootScript = `(function(){try{localStorage.removeItem(${JSON.
 
 export const PRELOAD_KEY = "sarthxen:preloaded";
 
-/** The preloader plays once per browser session, only when motion is on. */
+/** The opening plays once per browser session, only when motion is on. */
 export function shouldPreload(motionOn: boolean, seenThisSession: boolean): boolean {
   return motionOn && !seenThisSession;
 }
 
 /**
  * Inline script for <head>, run after motionBootScript: marks <html data-preload="on">
- * so CSS shows the preloader from the very first paint. No JS = no attribute = no preloader.
+ * so CSS shows the opening card from the very first paint. No JS = no attribute = no opening.
  */
 export const preloadBootScript = `(function(){try{var d=document.documentElement;if(d.getAttribute('data-motion')!=='on')return;if(sessionStorage.getItem(${JSON.stringify(
   PRELOAD_KEY,
