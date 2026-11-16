@@ -20,7 +20,11 @@ export function placements(width: number, height: number) {
       : [0, HALF_Y * 0.3, halfX * 0.72, 0]) as Placement,
     // Roads and body: right of the case-study text.
     right: (landscape ? [halfX * 0.66, -0.05, HALF_Y * 0.68, 0] : [0, -0.1, halfX * 0.9, 0]) as Placement,
-    // Grid and field: the whole screen.
+    // Grid: the whole screen.
     full: [0, 0, halfX * 1.05, HALF_Y * 1.05] as Placement,
+    // Portrait: centred above the giant word; on phones it fits the width.
+    portrait: (landscape
+      ? [0, HALF_Y * 0.2, HALF_Y * 2.1, 0]
+      : [0, HALF_Y * 0.3, Math.min(HALF_Y * 1.4, halfX * 2), 0]) as Placement,
   };
 }

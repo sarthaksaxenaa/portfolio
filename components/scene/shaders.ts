@@ -52,17 +52,19 @@ uniform float uSize;
 uniform float uPixelRatio;
 uniform vec2  uMouse;      // pointer in NDC (-1..1), far away when unknown
 uniform float uMouseForce; // 0..1, eased in and out
-uniform float uMorph;      // 0 field, 1 grid, 2 roads, 3 body, 4 sphere (fractions blend)
+uniform float uMorph;      // 0 portrait, 1 grid, 2 roads, 3 body, 4 sphere (fractions blend)
 uniform float uRot;        // sphere spin, radians
 uniform vec4  uSphere;     // xy centre, z radius (world units)
 uniform vec4  uRight;      // placement for roads and body: xy centre, z scale
-uniform vec4  uFull;       // placement for grid and field: xy centre, z half-width, w half-height
+uniform vec4  uFull;       // placement for the grid: xy centre, z half-width, w half-height
+uniform vec4  uPortrait;   // hero portrait: xy centre, z height (world units)
+uniform float uIntro;      // 0 → 1: the burst out of the opening dot
 attribute float aSeed;
 attribute vec3  aGrid;
 attribute vec3  aRoad;
 attribute float aAlong;
 attribute vec3  aBody;
-attribute vec3  aField;
+attribute vec3  aPortrait; // x, y (image-centred), brightness
 varying float vAlpha;
 
 ${simplex3d}
@@ -70,7 +72,7 @@ ${simplex3d}
 vec3 rotY(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(c*v.x + s*v.z, v.y, -s*v.x + c*v.z); }
 
 void main() {
-  float wField  = 1.0 - clamp(uMorph, 0.0, 1.0);
+  float wPortrait = 1.0 - clamp(uMorph, 0.0, 1.0);
   float wRoad   = clamp(uMorph - 1.0, 0.0, 1.0) * (1.0 - clamp(uMorph - 2.0, 0.0, 1.0));
   float wSphere = clamp(uMorph - 3.0, 0.0, 1.0);
 
@@ -86,23 +88,35 @@ void main() {
   vec3 tGrid  = vec3(uFull.xy, 0.0) + vec3(aGrid.x * uFull.z, aGrid.y * uFull.w, aGrid.z) + breathe;
   vec3 tRoad  = vec3(uRight.xy, 0.0) + aRoad * uRight.z;
   vec3 tBody  = vec3(uRight.xy, 0.0) + aBody * uRight.z + breathe;
-  // The field drifts upward and wraps: weight coming off the bar.
-  vec3 f = aField;
-  f.y = mod(f.y + 1.0 + uTime * 0.03 * (0.5 + aSeed), 2.0) - 1.0;
-  vec3 tField = vec3(uFull.xy, 0.0) + vec3(f.x * uFull.z, f.y * uFull.w, f.z);
+  // The hero portrait: brighter points sit a little closer, and every point shimmers like dust.
+  vec3 shimmer = vec3(
+    snoise(vec3(aSeed * 31.0, uTime * 0.35, 1.0)),
+    snoise(vec3(aSeed * 17.0, uTime * 0.35, 2.0)),
+    0.0) * 0.006;
+  vec3 tPortrait = vec3(uPortrait.xy, 0.0)
+    + vec3(aPortrait.xy * uPortrait.z, (aPortrait.z - 0.5) * 0.18)
+    + shimmer;
 
-  vec3 p = tField;
+  vec3 p = tPortrait;
   p = mix(p, tGrid,   clamp(uMorph, 0.0, 1.0));
   p = mix(p, tRoad,   clamp(uMorph - 1.0, 0.0, 1.0));
   p = mix(p, tBody,   clamp(uMorph - 2.0, 0.0, 1.0));
   p = mix(p, tSphere, clamp(uMorph - 3.0, 0.0, 1.0));
 
+  // First load: every particle bursts out of the centre (the opening dot) to its place.
+  float burstT = clamp(uIntro * 1.6 - aSeed * 0.6, 0.0, 1.0);
+  float burst = 1.0 - pow(1.0 - burstT, 3.0);
+  vec3 origin = vec3(fract(aSeed * 91.7) - 0.5, fract(aSeed * 53.3) - 0.5, 0.0) * 0.03;
+  p = mix(origin, p, burst);
+
   // Pointer repulsion in screen space.
   vec4 clip = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
   float d = distance(clip.xy / clip.w, uMouse);
-  float push = smoothstep(0.42, 0.0, d) * uMouseForce;
+  // On the portrait the touch is small and gentle, so the face ripples instead of scattering.
+  float reach = mix(0.42, 0.16, wPortrait);
+  float push = smoothstep(reach, 0.0, d) * uMouseForce;
   vec3 away = mix(normalize(vec3(clip.xy / clip.w - uMouse, 0.0) + 1e-5), sp, wSphere);
-  p += away * push * 0.3;
+  p += away * push * mix(0.3, 0.07, wPortrait);
 
   vec4 mv = modelViewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
@@ -112,8 +126,10 @@ void main() {
   float band = smoothstep(0.15, 0.6, abs(fract(flow * 2.5) - 0.5) * 2.0);
   float sphereA = (0.08 + 0.75 * facing * facing) * (0.45 + 0.55 * band);
   float pulse = smoothstep(0.92, 1.0, fract(aAlong * 3.0 - uTime * 0.35 + aSeed * 0.15));
-  float flatA = 0.55 + wRoad * pulse * 1.6 - wField * 0.15;
-  vAlpha = mix(flatA, sphereA, wSphere) * (0.7 + 0.3 * aSeed) + push * 0.6;
+  float flatA = 0.55 + wRoad * pulse * 1.6;
+  float portraitA = 0.25 + 0.95 * aPortrait.z;
+  vAlpha = mix(mix(flatA, portraitA, wPortrait), sphereA, wSphere) * (0.7 + 0.3 * aSeed)
+    + push * 0.6 + (1.0 - burst) * 0.5;
 
   gl_PointSize = uSize * uPixelRatio * (0.6 + 0.6 * aSeed) * (1.0 / -mv.z);
 }

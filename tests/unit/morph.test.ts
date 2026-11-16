@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHAPTER_OPACITY, MORPH_INDEX, ROADS, body, field, grid, insideBody, roads } from "@/lib/morphTargets";
+import { CHAPTER_OPACITY, MORPH_INDEX, ROADS, body, grid, insideBody, roads } from "@/lib/morphTargets";
 import { chapters } from "@/content/chapters";
 
 const N = 4000;
@@ -11,7 +11,6 @@ describe("morph targets", () => {
     ["grid", grid(N)],
     ["roads", roads(N).positions],
     ["body", body(N)],
-    ["field", field(N)],
   ] as const)("%s returns exactly count × 3 finite values in [-1.1, 1.1]", (_, pts) => {
     expect(pts.length).toBe(N * 3);
     expect(finite(pts)).toBe(true);
@@ -19,7 +18,7 @@ describe("morph targets", () => {
   });
 
   it("every generator handles zero and negative counts", () => {
-    for (const f of [grid, body, field]) {
+    for (const f of [grid, body]) {
       expect(f(0).length).toBe(0);
       expect(f(-10).length).toBe(0);
     }
@@ -65,8 +64,10 @@ describe("morph targets", () => {
     }
   });
 
-  it("the hero shows no particles at all: nothing is ever drawn over the portrait", () => {
-    expect(CHAPTER_OPACITY.warmup).toBe(0);
+  it("in the hero the particles are the portrait: the brightest the scene ever gets", () => {
+    expect(MORPH_INDEX.warmup).toBe(0);
+    for (const c of chapters) expect(CHAPTER_OPACITY.warmup).toBeGreaterThanOrEqual(CHAPTER_OPACITY[c.id]);
+    expect(CHAPTER_OPACITY.warmup).toBeGreaterThan(0.8);
   });
 
   it("every chapter has a shape; text sections stay faint; the sphere closes the page at Contact", () => {

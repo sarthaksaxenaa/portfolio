@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { AdditiveBlending, Color, type ShaderMaterial } from "three";
+import { AdditiveBlending, Color, type BufferAttribute, type ShaderMaterial } from "three";
 import { damp } from "@/lib/cursor";
 import { fibonacciSphere, seeds } from "@/lib/sphere";
-import { CHAPTER_OPACITY, MORPH_INDEX, body, field, grid, roads } from "@/lib/morphTargets";
+import { CHAPTER_OPACITY, MORPH_INDEX, body, grid, roads } from "@/lib/morphTargets";
+import { PORTRAIT_SRC, samplePortrait } from "@/lib/portraitPoints";
+import { CHAPTER_EVENT, SCENE_READY_EVENT } from "@/lib/sceneEvents";
 import { fragmentShader, vertexShader } from "./shaders";
-import { CAM_Z, FOV, placements } from "@/lib/scenePlacement";
+import { CAM_Z, FOV, HALF_Y, placements } from "@/lib/scenePlacement";
 
 type Props = {
   count: number;
@@ -16,7 +18,7 @@ type Props = {
   animate: boolean;
 };
 
-export const CHAPTER_EVENT = "chapterchange";
+const INTRO_MS = 2200;
 const FAR = 99;
 
 
@@ -26,6 +28,8 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
   const material = useRef<ShaderMaterial>(null);
   const pointer = useRef({ x: FAR, y: FAR, force: 0, target: 0 });
   const state = useRef({ morph: 0, opacity: 0, chapter: "warmup", rot: 0 });
+  const portraitAttr = useRef<BufferAttribute>(null);
+  const intro = useRef<{ start: number | null; ready: boolean }>({ start: null, ready: false });
   const { gl, invalidate, size } = useThree();
 
   const geometry = useMemo(() => {
@@ -37,7 +41,8 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
       aRoad: r.positions,
       aAlong: r.along,
       aBody: body(count),
-      aField: field(count),
+      // Filled from the portrait image once it loads; until then every point waits at the centre.
+      aPortrait: new Float32Array(count * 3),
     };
   }, [count]);
 
@@ -54,10 +59,47 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
       uRight: { value: [0, 0, 1, 0] },
       uFull: { value: [0, 0, 1, 1] },
       uOpacity: { value: 0 },
+      uPortrait: { value: [0, 0, 1, 0] },
+      uIntro: { value: 0 },
       uColor: { value: new Color("#ffffff") },
     }),
     [],
   );
+
+  // Sample the portrait once: brighter pixels get more particles. Then the burst can begin.
+  useEffect(() => {
+    let alive = true;
+    const img = new window.Image();
+    img.decoding = "async";
+    img.src = PORTRAIT_SRC;
+    img
+      .decode()
+      .then(() => {
+        if (!alive) return;
+        const w = 240;
+        const h = Math.round((w * img.naturalHeight) / img.naturalWidth);
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return;
+        ctx.filter = "blur(1.5px)"; // melt the halftone dots into tones
+        ctx.drawImage(img, 0, 0, w, h);
+        const points = samplePortrait(ctx.getImageData(0, 0, w, h).data, w, h, count, { floor: 0.06, gamma: 1.1 });
+        const attr = portraitAttr.current;
+        if (!attr) return;
+        (attr.array as Float32Array).set(points);
+        attr.needsUpdate = true;
+        intro.current.ready = true;
+        invalidate();
+      })
+      .catch(() => {
+        intro.current.ready = true; // no portrait: the other shapes still work
+      });
+    return () => {
+      alive = false;
+    };
+  }, [count, invalidate]);
 
   // Chapter changes (from ChapterObserver), scroll and resize: redraw on demand when not animating.
   useEffect(() => {
@@ -121,6 +163,16 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
     u.uSphere.value = place.sphere;
     u.uRight.value = place.right;
     u.uFull.value = place.full;
+    // The portrait belongs to the hero: it scrolls away with the page like any content.
+    const scrolled = (window.scrollY / h) * 2 * HALF_Y;
+    u.uPortrait.value = [place.portrait[0], place.portrait[1] + scrolled, place.portrait[2], 0];
+    // The burst starts once the portrait is sampled, and takes about two seconds.
+    const it = intro.current;
+    if (it.ready && it.start === null) {
+      it.start = performance.now();
+      window.dispatchEvent(new Event(SCENE_READY_EVENT));
+    }
+    u.uIntro.value = !animate ? (it.ready ? 1 : 0) : it.start === null ? 0 : Math.min(1, (performance.now() - it.start) / INTRO_MS);
 
     const targetMorph = MORPH_INDEX[s.chapter] ?? 0;
     const targetOpacity = CHAPTER_OPACITY[s.chapter] ?? 0.25;
@@ -153,7 +205,7 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
         <bufferAttribute attach="attributes-aRoad" args={[geometry.aRoad, 3]} />
         <bufferAttribute attach="attributes-aAlong" args={[geometry.aAlong, 1]} />
         <bufferAttribute attach="attributes-aBody" args={[geometry.aBody, 3]} />
-        <bufferAttribute attach="attributes-aField" args={[geometry.aField, 3]} />
+        <bufferAttribute ref={portraitAttr} attach="attributes-aPortrait" args={[geometry.aPortrait, 3]} />
       </bufferGeometry>
       <shaderMaterial
         ref={material}

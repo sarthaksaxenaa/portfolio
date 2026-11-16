@@ -125,20 +125,8 @@ export function body(count: number): Float32Array {
   return out;
 }
 
-/** A loose scattered volume: the cool-down after the session. */
-export function field(count: number): Float32Array {
-  const n = n0(count);
-  const out = new Float32Array(n * 3);
-  const rand = rng(23);
-  for (let i = 0; i < n; i++) {
-    out[i * 3] = rand() * 2 - 1;
-    out[i * 3 + 1] = rand() * 2 - 1;
-    out[i * 3 + 2] = (rand() - 0.5) * 1.2;
-  }
-  return out;
-}
 
-/** Chapter → morph index used by the shader (0 field, 1 grid, 2 roads, 3 body, 4 sphere). */
+/** Chapter → morph index used by the shader (0 portrait, 1 grid, 2 roads, 3 body, 4 sphere). */
 export const MORPH_INDEX: Record<string, number> = {
   warmup: 0,
   grind: 1,
@@ -149,11 +137,11 @@ export const MORPH_INDEX: Record<string, number> = {
 };
 
 /**
- * How visible the particles are per chapter. The hero shows none: the portrait stands alone.
- * The sphere is brightest at Contact, where it has empty space beside "Say hi".
+ * How visible the particles are per chapter. In the hero they are the portrait itself, so they
+ * are at their brightest; elsewhere they sit faintly behind the text.
  */
 export const CHAPTER_OPACITY: Record<string, number> = {
-  warmup: 0,
+  warmup: 0.95, // the portrait is the hero
   grind: 0.2,
   rideshare: 0.16,
   carenexus: 0.2,

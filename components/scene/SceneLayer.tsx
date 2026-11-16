@@ -4,16 +4,15 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { DPR_CAP, PARTICLES, detectTier, readHints, type Tier } from "@/lib/deviceTier";
 import { useMotion } from "@/components/motion/MotionProvider";
-import { afterOpening, startDeferred } from "@/lib/schedule";
+import { whenIdle } from "@/lib/schedule";
+import { SCENE_READY_EVENT } from "@/lib/sceneEvents";
 
 // three.js and the shaders only download after the page is interactive, never on the server.
-// Phones start on the first touch or scroll: the hero has no particles, so nothing is missing before then.
-// On a first visit, nothing starts until the opening card is gone.
 const ParticleField = dynamic(() => import("./ParticleField"), { ssr: false });
 
 /**
- * One fixed WebGL layer behind the whole page, on every device with WebGL. The particles take a
- * new shape for each section and close as a sphere beside the contact section; the hero has none.
+ * One fixed WebGL layer behind the whole page, on every device with WebGL. In the hero the
+ * particles are the portrait; they take a new shape for each section after it.
  * The device tier sets the particle budget; only browsers without WebGL (or with Save-Data) skip it.
  */
 export function SceneLayer() {
@@ -22,15 +21,17 @@ export function SceneLayer() {
 
   useEffect(() => {
     let alive = true;
-    const start = () => alive && setTier(detectTier(readHints()));
-    // Behind the first-visit opening card the scene would be invisible anyway; starting it
-    // there only slows the card on weak devices. Wait for the card, then the usual deferral.
-    let stopDeferred = () => {};
-    const stopWaiting = afterOpening(() => (stopDeferred = startDeferred(start)));
+    // The hero is the particle portrait, so every device starts at the first idle moment after
+    // load (the opening dot pulses meanwhile, then bursts into the particles).
+    whenIdle(() => {
+      if (!alive) return;
+      const t = detectTier(readHints());
+      setTier(t);
+      // No WebGL (or Save-Data): nothing to wait for, so the opening may burst right away.
+      if (t === "none") window.dispatchEvent(new Event(SCENE_READY_EVENT));
+    });
     return () => {
       alive = false;
-      stopWaiting();
-      stopDeferred();
     };
   }, []);
 
