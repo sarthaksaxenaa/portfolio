@@ -2,5 +2,3 @@
 
 /** Fired when the section in view changes; detail is the chapter id. */
 export const CHAPTER_EVENT = "chapterchange";
-/** Fired once the scene is ready to burst (portrait sampled), or known to be absent. */
-export const SCENE_READY_EVENT = "sceneready";

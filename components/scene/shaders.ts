@@ -103,10 +103,14 @@ void main() {
   p = mix(p, tBody,   clamp(uMorph - 2.0, 0.0, 1.0));
   p = mix(p, tSphere, clamp(uMorph - 3.0, 0.0, 1.0));
 
-  // First load: every particle bursts out of the centre (the opening dot) to its place.
+  // First load: the particles start as noise scattered over the whole screen and gather into
+  // their places, the first ones first.
   float burstT = clamp(uIntro * 1.6 - aSeed * 0.6, 0.0, 1.0);
   float burst = 1.0 - pow(1.0 - burstT, 3.0);
-  vec3 origin = vec3(fract(aSeed * 91.7) - 0.5, fract(aSeed * 53.3) - 0.5, 0.0) * 0.03;
+  vec3 origin = vec3(
+    (fract(aSeed * 91.7) * 2.0 - 1.0) * uFull.z,
+    (fract(aSeed * 53.3) * 2.0 - 1.0) * uFull.w,
+    (fract(aSeed * 17.1) - 0.5) * 0.6);
   p = mix(origin, p, burst);
 
   // Pointer repulsion in screen space.

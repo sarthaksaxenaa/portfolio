@@ -7,7 +7,7 @@ import { damp } from "@/lib/cursor";
 import { fibonacciSphere, seeds } from "@/lib/sphere";
 import { CHAPTER_OPACITY, MORPH_INDEX, body, grid, roads } from "@/lib/morphTargets";
 import { PORTRAIT_SRC, samplePortrait } from "@/lib/portraitPoints";
-import { CHAPTER_EVENT, SCENE_READY_EVENT } from "@/lib/sceneEvents";
+import { CHAPTER_EVENT } from "@/lib/sceneEvents";
 import { fragmentShader, vertexShader } from "./shaders";
 import { CAM_Z, FOV, HALF_Y, placements } from "@/lib/scenePlacement";
 
@@ -167,9 +167,11 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
     u.uPortrait.value = [place.portrait[0], place.portrait[1] + scrolled, place.portrait[2], 0];
     // The burst starts once the portrait is sampled, and takes about two seconds.
     const it = intro.current;
-    if (it.ready && it.start === null) {
+    // On a first visit the opening holds the burst until its reveal.
+    const opening = document.documentElement.getAttribute("data-preload");
+    const held = opening === "on" || opening === "loading";
+    if (it.ready && it.start === null && !held) {
       it.start = performance.now();
-      window.dispatchEvent(new Event(SCENE_READY_EVENT));
     }
     u.uIntro.value = !animate ? (it.ready ? 1 : 0) : it.start === null ? 0 : Math.min(1, (performance.now() - it.start) / INTRO_MS);
 

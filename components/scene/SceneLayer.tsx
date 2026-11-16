@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { DPR_CAP, PARTICLES, detectTier, readHints, type Tier } from "@/lib/deviceTier";
 import { useMotion } from "@/components/motion/MotionProvider";
 import { whenIdle } from "@/lib/schedule";
-import { SCENE_READY_EVENT } from "@/lib/sceneEvents";
 
 // three.js and the shaders only download after the page is interactive, never on the server.
 const ParticleField = dynamic(() => import("./ParticleField"), { ssr: false });
@@ -25,10 +24,7 @@ export function SceneLayer() {
     // load (the opening dot pulses meanwhile, then bursts into the particles).
     whenIdle(() => {
       if (!alive) return;
-      const t = detectTier(readHints());
-      setTier(t);
-      // No WebGL (or Save-Data): nothing to wait for, so the opening may burst right away.
-      if (t === "none") window.dispatchEvent(new Event(SCENE_READY_EVENT));
+      setTier(detectTier(readHints()));
     });
     return () => {
       alive = false;
