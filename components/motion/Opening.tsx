@@ -264,6 +264,7 @@ export function Opening() {
         finished = true;
         cancelAnimationFrame(raf);
         canvas.style.opacity = "0";
+        release();
         end();
       }
     };
@@ -271,11 +272,12 @@ export function Opening() {
 
     // ---- skipping: a click, tap, key or wheel jumps straight to the glide --------------------
     const skip = (e: Event) => {
+      if (finished) return; // the page is the visitor's again
       if (e.type === "wheel") {
         e.preventDefault();
         e.stopPropagation(); // keep smooth scroll from moving the page underneath
       }
-      if (finished || t0 < 0) return;
+      if (t0 < 0) return;
       const t = performance.now() - t0 + skipBy;
       skipBy += skipTarget(t) - t;
     };
@@ -284,14 +286,17 @@ export function Opening() {
     window.addEventListener("keydown", skip, opts);
     window.addEventListener("wheel", skip, opts);
     window.addEventListener("resize", measure, { passive: true });
-
-    return () => {
-      cancelAnimationFrame(raf);
-      window.clearTimeout(fontTimer);
+    function release() {
       window.removeEventListener("pointerdown", skip, opts);
       window.removeEventListener("keydown", skip, opts);
       window.removeEventListener("wheel", skip, opts);
       window.removeEventListener("resize", measure);
+    }
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(fontTimer);
+      release();
     };
   }, []);
 

@@ -145,6 +145,19 @@ describe("Opening", () => {
     window.removeEventListener("wheel", behind);
   });
 
+  it("hands the wheel back once it has finished, so the page scrolls again", async () => {
+    await story();
+    run(TOTAL_MS + 100);
+    expect(state()).toBeNull();
+    const behind = vi.fn();
+    window.addEventListener("wheel", behind);
+    const e = new WheelEvent("wheel", { deltaY: 80, cancelable: true, bubbles: true });
+    act(() => void document.body.dispatchEvent(e));
+    expect(e.defaultPrevented).toBe(false);
+    expect(behind).toHaveBeenCalledTimes(1);
+    window.removeEventListener("wheel", behind);
+  });
+
   it("gets out of the way at once when there is no canvas or no hero word to land on", () => {
     root.setAttribute("data-preload", "on");
     render(<Opening />); // no Warmup: nothing to land on
