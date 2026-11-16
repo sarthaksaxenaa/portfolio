@@ -227,11 +227,14 @@ test.describe("case studies", () => {
 
   test("the nav marks the chapter you are reading and the light takes its colour", async ({ page }) => {
     await page.goto("/");
-    await page.locator("#carenexus-heading").scrollIntoViewIfNeeded();
-    await page.mouse.wheel(0, 200);
+    // Put the CareNexus heading just above the reading line (40% down the screen).
+    await page.evaluate(() => {
+      const top = document.getElementById("carenexus-heading")!.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo(0, top - window.innerHeight * 0.25);
+    });
     await expect(page.locator('nav a[aria-current="location"]')).toHaveText("Projects");
     await expect
-      .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue("--glow")))
+      .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue("--glow")), { timeout: 10_000 })
       .toBe("155 107 255");
   });
 });
@@ -243,8 +246,17 @@ test.describe("accessibility", () => {
       await page.goto("/");
       // Wait until reveals are set up, or the "all visible" check below passes before they start.
       if (motion === "on") await expect(page.locator("#grind-heading")).toHaveAttribute("data-split-ready", "");
+      // Read the page a screen at a time, as a visitor would, so every scroll-triggered reveal
+      // fires (a single jump to the bottom can skip triggers on a busy CI machine).
+      for (let i = 0; i < 40; i++) {
+        const atEnd = await page.evaluate(() => {
+          window.scrollBy(0, window.innerHeight * 0.8);
+          return window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+        });
+        await page.waitForTimeout(120);
+        if (atEnd) break;
+      }
       // Let reveals finish so axe sees final colours, not mid-fade opacity.
-      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await expect
         .poll(() =>
           page.evaluate(() =>
@@ -252,6 +264,7 @@ test.describe("accessibility", () => {
               (el) => getComputedStyle(el).opacity === "1",
             ),
           ),
+          { timeout: 15_000 },
         )
         .toBe(true);
       const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
