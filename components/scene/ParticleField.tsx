@@ -76,16 +76,15 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
       .decode()
       .then(() => {
         if (!alive) return;
-        const w = 240;
+        const w = 300;
         const h = Math.round((w * img.naturalHeight) / img.naturalWidth);
         const c = document.createElement("canvas");
         c.width = w;
         c.height = h;
         const ctx = c.getContext("2d", { willReadFrequently: true });
         if (!ctx) return;
-        ctx.filter = "blur(1.5px)"; // melt the halftone dots into tones
         ctx.drawImage(img, 0, 0, w, h);
-        const points = samplePortrait(ctx.getImageData(0, 0, w, h).data, w, h, count, { floor: 0.06, gamma: 1.1 });
+        const points = samplePortrait(ctx.getImageData(0, 0, w, h).data, w, h, count, { floor: 0.1, gamma: 1.5 });
         const attr = portraitAttr.current;
         if (!attr) return;
         (attr.array as Float32Array).set(points);

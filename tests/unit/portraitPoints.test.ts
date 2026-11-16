@@ -73,3 +73,14 @@ describe("burstProgress", () => {
     expect(burstProgress(0.3, 0)).toBeGreaterThan(burstProgress(0.3, 0.8));
   });
 });
+
+describe("portrait source", () => {
+  it("ships as a small WebP in /public, where the particles load it from", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { PORTRAIT_SRC } = await import("@/lib/portraitPoints");
+    const file = readFileSync(join(process.cwd(), "public", PORTRAIT_SRC.slice(1)));
+    expect(file.subarray(8, 12).toString()).toBe("WEBP");
+    expect(file.byteLength).toBeLessThan(60_000);
+  });
+});

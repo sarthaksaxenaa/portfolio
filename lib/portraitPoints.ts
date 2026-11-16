@@ -4,7 +4,11 @@
  * Pure (works on raw RGBA bytes) so it can be tested without a browser.
  */
 
-export const PORTRAIT_SRC = "/portrait-halftone.webp";
+/**
+ * Greyscale source for the particles: the original photo's tones with the background removed
+ * (masked by the halftone cut-out) and contrast stretched, so features like the glasses survive.
+ */
+export const PORTRAIT_SRC = "/portrait-particles.webp";
 
 function rng(seed: number) {
   let s = seed >>> 0;
