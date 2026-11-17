@@ -26,6 +26,13 @@ describe("home page", () => {
     expect(labelId && container.querySelector(`#${labelId}`)).toBeTruthy();
   });
 
+  it("the intro's See the work opens the featured work, not a single case study", () => {
+    const { container } = render(<Home />);
+    const cta = screen.getByRole("link", { name: "See the work" });
+    expect(cta).toHaveAttribute("href", "#work");
+    expect(container.querySelector("#work")).not.toBeNull();
+  });
+
   it("every nav link points at a chapter that exists", () => {
     const { container } = render(<Home />);
     const nav = screen.getByRole("navigation", { name: "Sections" });

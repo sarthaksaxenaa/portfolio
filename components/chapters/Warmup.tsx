@@ -54,7 +54,7 @@ export function Warmup() {
           </p>
           <div className="flex flex-wrap gap-3">
             <a
-              href="#rideshare"
+              href="#work"
               data-magnetic
               className="rounded-full bg-text px-5 py-2.5 text-sm font-medium text-bg transition-opacity hover:opacity-85"
             >
