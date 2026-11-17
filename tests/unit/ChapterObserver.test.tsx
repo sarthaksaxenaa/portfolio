@@ -1,12 +1,13 @@
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ChapterObserver } from "@/components/motion/ChapterObserver";
-import { chapters, navItems } from "@/content/chapters";
+import { homeChapters, navItems } from "@/content/chapters";
 
 let positions: Record<string, number> = {};
 const H = 1000;
 
-function Page() {
+/** The home page's sections by default; a case-study page renders just its own. */
+function Page({ ids = homeChapters.map((c) => c.id) }: { ids?: string[] }) {
   return (
     <>
       <nav aria-label="Sections">
@@ -16,8 +17,8 @@ function Page() {
           </a>
         ))}
       </nav>
-      {chapters.map((c) => (
-        <section key={c.id} id={c.id} />
+      {ids.map((id) => (
+        <section key={id} id={id} />
       ))}
       <ChapterObserver />
     </>
@@ -26,7 +27,7 @@ function Page() {
 
 beforeEach(() => {
   // Each section is 1000px tall; scrollY shifts them all.
-  positions = Object.fromEntries(chapters.map((c, i) => [c.id, i * H]));
+  positions = Object.fromEntries(homeChapters.map((c, i) => [c.id, i * H]));
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
     const top = (positions[this.id] ?? 0) - window.scrollY;
     return { top, bottom: top + H, left: 0, right: 0, width: 0, height: H, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
@@ -60,22 +61,24 @@ describe("ChapterObserver", () => {
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
 
-  it("follows the scroll and tints the light inside a case study", async () => {
+  it("follows the scroll down the home page, with no tint outside a case study", async () => {
     vi.stubGlobal("scrollY", 0);
     render(<Page />);
-    await scrollTo(1 * H); // featured work: Projects, no tint
+    const expected = ["#warmup", "#work", "#grind", "#skills", "#cooldown"];
+    for (const [i, href] of expected.entries()) {
+      await scrollTo(i * H);
+      expect(current()).toBe(href);
+      expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
+    }
+  });
+
+  it("on a case-study page, Projects is lit and the light takes the project's colour", () => {
+    vi.stubGlobal("scrollY", 0);
+    positions = { carenexus: 0 };
+    render(<Page ids={["carenexus"]} />);
     expect(current()).toBe("#work");
-    expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
-    await scrollTo(3 * H);
-    expect(current()).toBe("#work");
-    expect(document.documentElement.getAttribute("data-chapter")).toBe("rideshare");
-    expect(document.documentElement.style.getPropertyValue("--glow")).toBe("129 140 248");
-    await scrollTo(4 * H); // CareNexus: still under "Projects"
-    expect(current()).toBe("#work");
+    expect(document.documentElement.getAttribute("data-chapter")).toBe("carenexus");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("155 107 255");
-    await scrollTo(5 * H);
-    expect(current()).toBe("#skills");
-    expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
 
   it("announces each chapter change once, for the particle scene", async () => {
@@ -86,9 +89,9 @@ describe("ChapterObserver", () => {
     render(<Page />);
     await scrollTo(1 * H);
     await scrollTo(1 * H + 100); // same chapter: no duplicate event
-    await scrollTo(3 * H);
+    await scrollTo(2 * H);
     window.removeEventListener("chapterchange", on);
-    expect(seen).toEqual(["warmup", "work", "rideshare"]);
+    expect(seen).toEqual(["warmup", "work", "grind"]);
   });
 
   it("never marks more than one link", async () => {

@@ -4,11 +4,13 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { StatTile } from "@/components/ui/StatTile";
 import { ExternalLink } from "@/components/ui/ExternalLink";
 
-type Props = { chapter: Chapter; project: Project; lead: string };
+type Props = { chapter: Chapter; project: Project; lead: string; headingAs?: "h1" | "h2" };
 
-/** A case-study chapter. Colour exists only here: the project's accent tints this section. */
-export function ProjectChapter({ chapter, project, lead }: Props) {
+/** A case study. Colour exists only here: the project's accent tints this section. On its own page
+ *  the project's name is the page's one h1. */
+export function ProjectChapter({ chapter, project, lead, headingAs = "h2" }: Props) {
   const headingId = `${chapter.id}-heading`;
+  const Sub = headingAs === "h1" ? "h2" : "h3"; // one level below the title, never skipping one
   return (
     <section
       id={chapter.id}
@@ -18,7 +20,7 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
       className="overflow-x-clip px-6 py-32"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-14">
-        <SectionHeader chapter={chapter} id={headingId} />
+        <SectionHeader chapter={chapter} id={headingId} as={headingAs} />
 
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr]">
           <div className="flex flex-col gap-5">
@@ -67,9 +69,7 @@ export function ProjectChapter({ chapter, project, lead }: Props) {
         )}
 
         <div data-pin className="flex flex-col gap-6">
-          <h3 className="font-mono text-xs uppercase tracking-[0.08em] text-muted">
-            Decisions, and what I said no to
-          </h3>
+          <Sub className="font-mono text-xs uppercase tracking-[0.08em] text-muted">Decisions, and what I said no to</Sub>
           <ol data-pin-track className="grid gap-6 lg:grid-cols-3">
             {project.decisions.map((d) => (
               <li

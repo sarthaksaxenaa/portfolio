@@ -80,8 +80,10 @@ function Featured({ project, flip }: { project: Project; flip?: boolean }) {
           >
             Code
           </ExternalLink>
+          {/* A plain link: the case study is its own page, and a full load lets the page-wide effects
+              (reveals, pinned decisions) set themselves up for it. */}
           <a
-            href={`#${project.slug}`}
+            href={`/work/${project.slug}`}
             className="rounded-full px-3 py-2.5 text-sm text-muted underline-offset-4 transition-colors hover:text-text hover:underline"
           >
             Case study

@@ -1,7 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Home from "@/app/page";
-import { chapters } from "@/content/chapters";
+import { chapters, homeChapters } from "@/content/chapters";
 import { PUBLIC_EMAIL } from "@/content/schema";
 import { provenance } from "@/components/ui/StatTile";
 
@@ -18,7 +18,7 @@ describe("home page", () => {
     expect(screen.getByRole("main")).toHaveAttribute("id", "main");
   });
 
-  it.each(chapters.map((c) => c.id))("renders the %s chapter as a labelled region", (id) => {
+  it.each(homeChapters.map((c) => c.id))("renders the %s chapter as a labelled region", (id) => {
     const { container } = render(<Home />);
     const section = container.querySelector(`section#${id}`);
     expect(section).not.toBeNull();
@@ -102,11 +102,14 @@ describe("home page", () => {
     });
   });
 
-  it("decision cards carry no numbering", () => {
+  it("keeps the case studies off the home page and links each card to its page", () => {
     const { container } = render(<Home />);
-    const cards = container.querySelectorAll("section[data-accent] ol li");
-    expect(cards.length).toBe(6);
-    cards.forEach((li) => expect(li.textContent).not.toMatch(/^\s*0\d/));
+    for (const c of chapters.filter((x) => x.path)) {
+      expect(container.querySelector(`section#${c.id}`)).toBeNull();
+      const card = container.querySelector(`article[aria-labelledby="work-${c.id}"]`)!;
+      expect(within(card as HTMLElement).getByRole("link", { name: "Case study" })).toHaveAttribute("href", c.path);
+    }
+    expect(container.querySelectorAll("section[data-accent]")).toHaveLength(0);
   });
 });
 

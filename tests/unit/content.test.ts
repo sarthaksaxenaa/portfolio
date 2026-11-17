@@ -147,6 +147,15 @@ describe("Featured work", () => {
     expect(ok(Project, { ...base, highlights: ["one", "two"] })).toBe(false);
   });
 
+  it("puts case studies after the home sections, each under /work", () => {
+    const paths = chapters.map((c) => c.path ?? null);
+    expect(paths).toEqual([null, null, null, null, null, "/work/rideshare", "/work/carenexus"]);
+    const bad: Record<string, unknown>[] = chapters.map((c) => ({ ...c, path: undefined }));
+    bad[2] = { ...bad[2], path: "/work/oops" };
+    expect(ok(Chapters, bad)).toBe(false);
+    expect(ok(Chapters, chapters.map((c, i) => (i === 5 ? { ...c, path: "/case/rideshare" } : c)))).toBe(false);
+  });
+
   it("nav Projects opens the featured work and stays lit through both case studies", () => {
     const projects = navItems.find((n) => n.label === "Projects")!;
     expect(projects.href).toBe("#work");

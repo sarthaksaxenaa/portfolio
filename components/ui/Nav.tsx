@@ -6,15 +6,16 @@ import { NavFade } from "./NavFade";
 
 /** Name in bold capitals on the left, small uppercase links on the right; the section you are
  *  reading is marked in red (ChapterObserver sets aria-current). Clear at the top; once you scroll,
- *  a dark fade sits behind it so page text never runs into the links. */
-export function Nav() {
+ *  a dark fade sits behind it so page text never runs into the links. On a case-study page `base="/"`
+ *  points every link back at the home page's sections. */
+export function Nav({ base = "" }: { base?: "" | "/" }) {
   return (
     <nav
       aria-label="Sections"
       className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-6 py-4 md:px-10"
     >
       <NavFade />
-      <a href="#warmup" className="flex flex-col leading-none">
+      <a href={base ? "/" : "#warmup"} className="flex flex-col leading-none">
         <span className="font-display text-sm font-extrabold uppercase tracking-[0.18em] text-text md:text-base">
           {profile.name}
         </span>
@@ -25,7 +26,7 @@ export function Nav() {
           {navItems.map((item) => (
             <li key={item.href}>
               <a
-                href={item.href}
+                href={`${base}${item.href}`}
                 data-chapters={item.chapters.join(" ")}
                 className="nav-link text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted transition-colors hover:text-text"
               >
@@ -35,7 +36,7 @@ export function Nav() {
           ))}
         </ul>
         <a
-          href="#cooldown"
+          href={`${base}#cooldown`}
           className="text-[0.7rem] font-medium uppercase tracking-[0.2em] text-muted transition-colors hover:text-text md:hidden"
         >
           Contact

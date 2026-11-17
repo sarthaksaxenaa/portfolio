@@ -8,13 +8,17 @@ export const chapters: Chapter[] = Chapters.parse([
   { id: "warmup", index: "00", label: "Full-stack engineer", title: "Sarthak Saxena" },
   { id: "work", index: "01", label: "Selected work", title: "Featured Engineering" },
   { id: "grind", index: "02", label: "Experience", title: "Reps before records" },
-  { id: "rideshare", index: "03", label: "Project · Real-time systems", title: "RideShare" },
-  { id: "carenexus", index: "04", label: "Project · Applied AI", title: "CareNexus" },
-  { id: "skills", index: "05", label: "What I build", title: "Try the work" },
-  { id: "cooldown", index: "06", label: "Contact", title: "Say hi" },
+  { id: "skills", index: "03", label: "What I build", title: "Try the work" },
+  { id: "cooldown", index: "04", label: "Contact", title: "Say hi" },
+  { id: "rideshare", index: "05", label: "Project · Real-time systems", title: "RideShare", path: "/work/rideshare" },
+  { id: "carenexus", index: "06", label: "Project · Applied AI", title: "CareNexus", path: "/work/carenexus" },
 ]);
 
-/** Top navigation: standard section names. Projects stays active across the featured work and both case studies. */
+/** The sections of the home page, in order; case studies have pages of their own. */
+export const homeChapters: Chapter[] = chapters.filter((c) => !c.path);
+
+/** Top navigation: standard section names. Projects stays active across the featured work and on
+ *  both case-study pages. Hrefs are home-page anchors; on another page the nav prefixes "/". */
 export const navItems = [
   { label: "Home", href: "#warmup", chapters: ["warmup"] },
   { label: "Experience", href: "#grind", chapters: ["grind"] },

@@ -116,6 +116,8 @@ export const Chapter = z.object({
   index: z.string().regex(/^0[0-6]$/),
   label: z.string().min(1),
   title: z.string().min(1),
+  /** Set for a case study, which has a page of its own instead of a section on the home page. */
+  path: z.string().regex(/^\/work\/[a-z0-9-]+$/, "Case studies live under /work").optional(),
 });
 export type Chapter = z.infer<typeof Chapter>;
 
@@ -129,4 +131,8 @@ export const Chapters = z
     });
     if (new Set(list.map((c) => c.id)).size !== list.length)
       ctx.addIssue({ code: "custom", message: "Chapter ids must be unique" });
+    // Home sections first, then the case-study pages, so the index still reads as page order.
+    const firstPage = list.findIndex((c) => c.path);
+    if (firstPage >= 0 && list.slice(firstPage).some((c) => !c.path))
+      ctx.addIssue({ code: "custom", message: "Case-study chapters come after every home section" });
   });
