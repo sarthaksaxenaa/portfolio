@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMotion } from "@/components/motion/MotionProvider";
-import { doneAt, suiteCounts, type TestData } from "@/lib/testReplay";
+import { SUITES, TOTAL_TESTS, doneAt, suiteCounts, type TestData } from "@/lib/testReplay";
 import { useJson, useNearView } from "./useNearView";
 
 export const TESTS_DATA_URL = "/demos/carenexus-tests.json";
@@ -69,7 +69,7 @@ export function TestReplay() {
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
 
   const counts = data ? suiteCounts(data) : null;
-  const total = data?.tests.length ?? 570;
+  const total = data?.tests.length ?? TOTAL_TESTS;
 
   return (
     <div ref={box} className="demo flex flex-col gap-5" data-demo="tests">
@@ -80,26 +80,25 @@ export function TestReplay() {
         <span className="text-muted">0 failing</span>
       </div>
 
+      {/* Every square is there before the list arrives; the names fill in when it does. */}
       <div ref={grid} className="test-grid" aria-hidden="true">
-        {data?.tests.map(([suite, file, name], i) => (
-          <span key={i} data-suite={suite} title={`${data.files[file]} › ${name}`} />
-        ))}
+        {data
+          ? data.tests.map(([suite, file, name], i) => <span key={i} data-suite={suite} title={`${data.files[file]} › ${name}`} />)
+          : Array.from({ length: TOTAL_TESTS }, (_, i) => <span key={i} />)}
       </div>
 
       <p className="h-5 truncate font-mono text-[0.7rem] text-muted" aria-hidden="true">
         <span ref={ticker}>{error ? "the test list did not load" : "loading the suite…"}</span>
       </p>
 
-      {counts && data && (
-        <ul className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-muted">
-          {data.suites.map((s, i) => (
-            <li key={s} className="flex items-center gap-2">
-              <span className="test-key" data-suite={i} aria-hidden="true" />
-              {s} <span className="text-text">{counts[i]}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[0.7rem] uppercase tracking-[0.15em] text-muted">
+        {SUITES.map((s, i) => (
+          <li key={s} className="flex items-center gap-2">
+            <span className="test-key" data-suite={i} aria-hidden="true" />
+            {s} <span className="text-text">{counts ? counts[i] : "…"}</span>
+          </li>
+        ))}
+      </ul>
 
       <p aria-live="polite" className="sr-only">
         {finished && counts && data
@@ -120,11 +119,10 @@ export function TestReplay() {
           Replay the suite
         </button>
       </div>
-      {data && (
-        <p className="text-xs leading-relaxed text-muted">
-          The real test names, collected from the repository; last green CI run {fmtDate(data.lastGreen)}. This replays them, it does not run them.
-        </p>
-      )}
+      <p className="text-xs leading-relaxed text-muted">
+        The real test names, collected from the repository; last green CI run {data ? fmtDate(data.lastGreen) : "…"}. This replays them,
+        it does not run them.
+      </p>
     </div>
   );
 }

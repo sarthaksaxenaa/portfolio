@@ -93,6 +93,14 @@ describe("pocket triage demo", () => {
 });
 
 describe("test replay demo", () => {
+  it("takes its full size before the test list arrives, so the page never jumps", () => {
+    fetchMock.mockImplementationOnce(() => new Promise(() => {})); // never answers
+    const { container } = render(<TestReplay />);
+    expect(container.querySelectorAll(".test-grid > span")).toHaveLength(570);
+    expect(container.querySelectorAll(".test-key")).toHaveLength(3);
+    expect(screen.getByText(/last green CI run/)).toBeInTheDocument();
+  });
+
   it("draws one square per test and, without motion, shows the finished suite", async () => {
     const { container } = render(<TestReplay />);
     await waitFor(() => expect(container.querySelectorAll(".test-grid > span")).toHaveLength(570));

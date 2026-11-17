@@ -1,12 +1,15 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { REPLAY_MS, doneAt, suiteCounts, type TestData } from "@/lib/testReplay";
+import { REPLAY_MS, SUITES, TOTAL_TESTS, doneAt, suiteCounts, type TestData } from "@/lib/testReplay";
 
 const data = JSON.parse(readFileSync("public/demos/carenexus-tests.json", "utf8")) as TestData;
 
 describe("test replay", () => {
   it("holds every test CareNexus runs in CI, by name, matching its published stats", () => {
     expect(data.tests).toHaveLength(570);
+    // The sizes reserved before the list downloads must match it, or the page would jump.
+    expect(data.tests).toHaveLength(TOTAL_TESTS);
+    expect(data.suites).toEqual([...SUITES]);
     expect(suiteCounts(data)).toEqual([453, 72, 45]);
     expect(data.coverage).toBeCloseTo(0.9355, 4);
     expect(new Set(data.tests.map((t) => `${t[1]}|${t[2]}`)).size).toBeGreaterThan(560);
