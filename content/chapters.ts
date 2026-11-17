@@ -9,7 +9,7 @@ export const chapters: Chapter[] = Chapters.parse([
   { id: "work", index: "01", label: "Selected work", title: "Featured Engineering" },
   { id: "grind", index: "02", label: "Experience", title: "Reps before records" },
   { id: "skills", index: "03", label: "What I build", title: "Try the work" },
-  { id: "cooldown", index: "04", label: "Contact", title: "Say hi" },
+  { id: "cooldown", index: "04", label: "Contact", title: "Let's talk" },
   { id: "rideshare", index: "05", label: "Project · Real-time systems", title: "RideShare", path: "/work/rideshare" },
   { id: "carenexus", index: "06", label: "Project · Applied AI", title: "CareNexus", path: "/work/carenexus" },
 ]);

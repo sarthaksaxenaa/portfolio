@@ -702,6 +702,34 @@ html[data-motion="on"]:is(:not([data-preload]), [data-preload="burst"]) .hero-su
   }
 }
 
+/* Contact: a small red dot that breathes, beside what Sarthak is open to. */
+.status-dot {
+  position: relative;
+  width: 0.55rem;
+  height: 0.55rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--color-signal);
+}
+.status-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--color-signal);
+  animation: status-pulse 2.4s ease-out infinite;
+}
+@keyframes status-pulse {
+  from { transform: scale(1); opacity: 0.6; }
+  to { transform: scale(3); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .status-dot::after { animation: none; }
+}
+html[data-motion="off"] .status-dot::after {
+  animation: none;
+}
+
 /* Behind the menu once you scroll: solid where the links sit, fading out below the bar. */
 .nav-fade {
   position: absolute;
