@@ -24,6 +24,13 @@ describe("pickActive", () => {
     expect(pickActive([{ id: "x", top: -3000, bottom: -100 }], vh)).toBe("x");
   });
 
+  it("at the very bottom of the page the last section wins, even if it is too short to reach the line", () => {
+    const bands = [{ id: "skills", top: -900, bottom: 700 }, { id: "contact", top: 700, bottom: 1000 }];
+    expect(pickActive(bands, vh)).toBe("skills");
+    expect(pickActive(bands, vh, 0.4, true)).toBe("contact");
+    expect(pickActive([], vh, 0.4, true)).toBeNull();
+  });
+
   it("returns null for no bands or a broken viewport", () => {
     expect(pickActive([], vh)).toBeNull();
     expect(pickActive([{ id: "a", top: 0, bottom: 10 }], 0)).toBeNull();

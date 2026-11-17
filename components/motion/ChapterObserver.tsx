@@ -45,6 +45,12 @@ export function ChapterObserver() {
       });
     };
 
+    // Scrolled all the way down a page that scrolls at all.
+    const atBottom = () => {
+      const h = document.documentElement.scrollHeight;
+      return h > window.innerHeight && window.scrollY + window.innerHeight >= h - 2;
+    };
+
     const measure = () => {
       raf = 0;
       apply(
@@ -54,6 +60,8 @@ export function ChapterObserver() {
             return { id: s.id, top: r.top, bottom: r.bottom };
           }),
           window.innerHeight,
+          0.4,
+          atBottom(),
         ),
       );
     };

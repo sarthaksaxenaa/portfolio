@@ -72,6 +72,17 @@ describe("ChapterObserver", () => {
     }
   });
 
+  it("marks Contact once the page is scrolled to the bottom, though Contact is too short to reach the line", async () => {
+    vi.stubGlobal("scrollY", 0);
+    positions = { warmup: 0, work: H, grind: 2 * H, skills: 3 * H, cooldown: 4 * H + 300 }; // Contact starts low
+    Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, value: 4 * H + 600 });
+    render(<Page />);
+    await scrollTo(3 * H + 600); // as far as the page goes: Contact's top is still below the line
+    expect(current()).toBe("#cooldown");
+    // @ts-expect-error restore jsdom's own getter
+    delete document.documentElement.scrollHeight;
+  });
+
   it("on a case-study page, Projects is lit and the light takes the project's colour", () => {
     vi.stubGlobal("scrollY", 0);
     positions = { carenexus: 0 };
