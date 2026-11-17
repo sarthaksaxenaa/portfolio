@@ -23,7 +23,7 @@ function readMode(motionOff: boolean): CursorMode {
  * The loop stops when the light has caught up with the pointer, so an idle page costs nothing.
  */
 export function CursorLight() {
-  // Motion already folds in prefers-reduced-motion and the visitor's MOTION OFF switch.
+  // Motion is on unless the OS asks for reduced motion (there is no on-page switch).
   const motionOff = !useMotion().enabled;
   const [mode, setMode] = useState<CursorMode>("off");
   const glowRef = useRef<HTMLDivElement>(null);

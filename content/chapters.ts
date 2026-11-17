@@ -17,8 +17,9 @@ export const chapters: Chapter[] = Chapters.parse([
 /** The sections of the home page, in order; case studies have pages of their own. */
 export const homeChapters: Chapter[] = chapters.filter((c) => !c.path);
 
-/** Top navigation: standard section names, in the order the sections come down the page. Projects stays active across the featured work and on
- *  both case-study pages. Hrefs are home-page anchors; on another page the nav prefixes "/". */
+/** Top navigation: standard section names, in the order the sections come down the page.
+ *  Projects stays active across the featured work and on both case-study pages. Hrefs are
+ *  home-page anchors; on another page the nav prefixes "/". */
 export const navItems = [
   { label: "Home", href: "#warmup", chapters: ["warmup"] },
   { label: "Projects", href: "#work", chapters: ["work", "rideshare", "carenexus"] },

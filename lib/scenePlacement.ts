@@ -14,7 +14,7 @@ export function placements(width: number, height: number) {
   const halfX = HALF_Y * aspect;
   const landscape = aspect >= 1;
   return {
-    // Sphere: closes the page, in the empty space beside "Say hi".
+    // Sphere: closes the page, in the empty space beside LET'S TALK.
     sphere: (landscape
       ? [halfX * 0.5, -HALF_Y * 0.05, HALF_Y * 0.62, 0]
       : [0, HALF_Y * 0.3, halfX * 0.72, 0]) as Placement,
