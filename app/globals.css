@@ -695,9 +695,9 @@ html[data-motion="on"]:is(:not([data-preload]), [data-preload="burst"]) .hero-su
   position: absolute;
   inset: 0 0 auto;
   z-index: -1;
-  height: 8.5rem;
+  height: calc(100% + 3.5rem); /* the bar's own height (taller on phones), then a fade below it */
   pointer-events: none;
-  background: linear-gradient(to bottom, var(--color-bg) 0%, rgb(5 5 6 / 0.92) 45%, transparent 100%);
+  background: linear-gradient(to bottom, var(--color-bg) 0%, rgb(5 5 6 / 0.94) calc(100% - 3.5rem), transparent 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
