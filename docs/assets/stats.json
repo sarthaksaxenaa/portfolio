@@ -1,24 +1,24 @@
 {
-  "measuredAt": "2026-11-16",
+  "measuredAt": "2026-11-17",
   "unit": {
-    "passed": 183,
-    "total": 183
+    "passed": 192,
+    "total": 192
   },
   "e2e": {
-    "passed": 114,
-    "total": 114
+    "passed": 120,
+    "total": 120
   },
   "lh": {
-    "performance": 88,
+    "performance": 95,
     "accessibility": 100,
     "bestPractices": 100,
     "seo": 100,
-    "lcpMs": 912,
+    "lcpMs": 909,
     "cls": 0
   },
   "live": {
     "ok": true,
     "status": 200,
-    "ms": 384
+    "ms": 567
   }
 }
