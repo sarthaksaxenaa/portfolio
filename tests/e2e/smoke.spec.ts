@@ -113,7 +113,7 @@ test.describe("cursor light", () => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-cursor", "on");
     // light-text paints glyphs with a gradient; if the gradient is invalid the text is transparent.
-    for (const sel of ["#grind-heading", "#cooldown a.light-text"]) {
+    for (const sel of ["#grind-heading", "#cooldown-heading"]) {
       const bg = await page.locator(sel).evaluate((el) => getComputedStyle(el).backgroundImage);
       expect(bg, sel).toContain("gradient");
     }
@@ -406,6 +406,30 @@ test.describe("featured work", () => {
     // Only CareNexus has a phone view.
     await expect(page.locator('article[aria-labelledby="work-carenexus"] .phone')).toHaveCount(1);
     await expect(page.locator('article[aria-labelledby="work-rideshare"] .phone')).toHaveCount(0);
+  });
+});
+
+test.describe("contact", () => {
+  test("LET'S TALK, the status, a working copy button, and the time in India", async ({ page, context, browserName }) => {
+    await page.goto("/");
+    await page.locator("#cooldown-heading").scrollIntoViewIfNeeded();
+    await expect(page.locator("#cooldown-heading")).toHaveText(/let.s\s*talk/i);
+    await expect(page.locator("#cooldown .status-dot")).toBeVisible();
+    // The clock shows India's time, whatever the visitor's own zone (this browser runs in UTC).
+    const expected = await page.evaluate(() =>
+      new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
+        .format(new Date())
+        .replace(/\s/g, " "),
+    );
+    await expect(page.getByTestId("local-time")).toContainText(/\d{1,2}:\d{2} [AP]M IST/);
+    expect(expected).toMatch(/\d{1,2}:\d{2} [AP]M/);
+    // Clipboard permissions can only be granted in Chromium; elsewhere the fallback message shows.
+    if (browserName === "chromium") await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.getByRole("button", { name: "Copy email address" }).click();
+    await expect(page.locator("#cooldown [role=status]")).toHaveText(/Copied|press Ctrl\+C/);
+    if (browserName === "chromium") {
+      expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("sarthaksaxena413@gmail.com");
+    }
   });
 });
 
