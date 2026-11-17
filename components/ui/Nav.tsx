@@ -2,15 +2,18 @@ import { navItems } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { HERO_ROLE } from "@/components/chapters/Warmup";
 import { ExternalLink } from "./ExternalLink";
+import { NavFade } from "./NavFade";
 
 /** Name in bold capitals on the left, small uppercase links on the right; the section you are
- *  reading is marked in red (ChapterObserver sets aria-current). */
+ *  reading is marked in red (ChapterObserver sets aria-current). Clear at the top; once you scroll,
+ *  a dark fade sits behind it so page text never runs into the links. */
 export function Nav() {
   return (
     <nav
       aria-label="Sections"
-      className="fixed inset-x-0 top-0 z-40 flex items-center justify-between bg-gradient-to-b from-bg/90 to-transparent px-6 py-4 md:px-10"
+      className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-6 py-4 md:px-10"
     >
+      <NavFade />
       <a href="#warmup" className="flex flex-col leading-none">
         <span className="font-display text-sm font-extrabold uppercase tracking-[0.18em] text-text md:text-base">
           {profile.name}

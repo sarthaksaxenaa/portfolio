@@ -485,6 +485,21 @@ html[data-motion="on"]:is(:not([data-preload]), [data-preload="burst"]) .hero-su
   object-position: top;
 }
 
+/* Behind the menu once you scroll: solid where the links sit, fading out below the bar. */
+.nav-fade {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 8.5rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--color-bg) 0%, rgb(5 5 6 / 0.92) 45%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+html[data-scrolled] .nav-fade {
+  opacity: 1;
+}
+
 /* The section you are reading, marked in the one red. */
 .nav-link[aria-current="location"] {
   color: var(--color-signal);
