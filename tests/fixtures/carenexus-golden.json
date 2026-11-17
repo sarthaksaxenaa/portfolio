@@ -1,0 +1,404 @@
+{
+ "source": "github.com/sarthaksaxenaa/carenexus@a69494e",
+ "cases": [
+  {
+   "q": "chest pain spreading to my left arm",
+   "level": "red",
+   "redFlag": "Possible Cardiac Event",
+   "top": null
+  },
+  {
+   "q": "I can't breathe properly",
+   "level": "red",
+   "redFlag": "Breathing Difficulty",
+   "top": null
+  },
+  {
+   "q": "my face is drooping on one side",
+   "level": "red",
+   "redFlag": "Possible Stroke (FAST)",
+   "top": null
+  },
+  {
+   "q": "she passed out and won't wake up",
+   "level": "red",
+   "redFlag": "Unconsciousness/Seizure",
+   "top": null
+  },
+  {
+   "q": "coughing up blood since yesterday",
+   "level": "red",
+   "redFlag": "Severe Bleeding",
+   "top": null
+  },
+  {
+   "q": "I want to die",
+   "level": "red",
+   "redFlag": "Help is Available",
+   "top": null
+  },
+  {
+   "q": "runny nose and sneezing",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "resp-common-cold",
+     "score": 0.3807
+    },
+    {
+     "id": "resp-allergic-rhinitis",
+     "score": 0.3127
+    },
+    {
+     "id": "derm-allergic-reaction",
+     "score": 0.228
+    }
+   ]
+  },
+  {
+   "q": "runny nose and sneezing for 10 days",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "resp-common-cold",
+     "score": 0.4485
+    },
+    {
+     "id": "resp-allergic-rhinitis",
+     "score": 0.2742
+    },
+    {
+     "id": "inf-sinusitis",
+     "score": 0.2293
+    }
+   ]
+  },
+  {
+   "q": "sore throat for 3 days",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "inf-strep-throat",
+     "score": 0.3017
+    },
+    {
+     "id": "resp-bronchitis",
+     "score": 0.2072
+    },
+    {
+     "id": "resp-common-cold",
+     "score": 0.2012
+    }
+   ]
+  },
+  {
+   "q": "headache",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "neuro-tension-headache",
+     "score": 0.3612
+    },
+    {
+     "id": "msk-neck-pain",
+     "score": 0.2605
+    },
+    {
+     "id": "resp-common-cold",
+     "score": 0.1966
+    }
+   ]
+  },
+  {
+   "q": "headache for 2 weeks",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "neuro-tension-headache",
+     "score": 0.2926
+    },
+    {
+     "id": "msk-neck-pain",
+     "score": 0.211
+    },
+    {
+     "id": "msk-back-pain",
+     "score": 0.1774
+    }
+   ]
+  },
+  {
+   "q": "tummy ache after eating",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "gi-gastroenteritis",
+     "score": 0.2147
+    },
+    {
+     "id": "cardio-chest-pain",
+     "score": 0.1597
+    },
+    {
+     "id": "gi-ibs",
+     "score": 0.1595
+    }
+   ]
+  },
+  {
+   "q": "burning when I pee",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "inf-uti",
+     "score": 0.3018
+    },
+    {
+     "id": "gen-diabetes-symptoms",
+     "score": 0.0941
+    }
+   ]
+  },
+  {
+   "q": "itchy red rash on my arm",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "derm-eczema",
+     "score": 0.3951
+    },
+    {
+     "id": "derm-allergic-reaction",
+     "score": 0.25
+    },
+    {
+     "id": "derm-fungal",
+     "score": 0.1649
+    }
+   ]
+  },
+  {
+   "q": "fever, chills and body aches",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "gen-fever",
+     "score": 0.4321
+    },
+    {
+     "id": "resp-influenza",
+     "score": 0.2657
+    },
+    {
+     "id": "resp-pneumonia",
+     "score": 0.1406
+    }
+   ]
+  },
+  {
+   "q": "fever, cough, fatigue and sore throat",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "gen-fever",
+     "score": 0.2204
+    },
+    {
+     "id": "inf-strep-throat",
+     "score": 0.2175
+    },
+    {
+     "id": "resp-influenza",
+     "score": 0.1888
+    }
+   ]
+  },
+  {
+   "q": "back pain after lifting weights",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "msk-back-pain",
+     "score": 0.42
+    },
+    {
+     "id": "gi-acid-reflux",
+     "score": 0.091
+    },
+    {
+     "id": "msk-knee-pain",
+     "score": 0.091
+    }
+   ]
+  },
+  {
+   "q": "ear pain and fever in my child",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "inf-ear-infection",
+     "score": 0.3051
+    },
+    {
+     "id": "gen-fever",
+     "score": 0.2953
+    },
+    {
+     "id": "resp-influenza",
+     "score": 0.1042
+    }
+   ]
+  },
+  {
+   "q": "feeling dizzy when I stand up",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "neuro-vertigo",
+     "score": 0.4164
+    },
+    {
+     "id": "neuro-migraine",
+     "score": 0.0989
+    }
+   ]
+  },
+  {
+   "q": "toothache for a week",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "msk-back-pain",
+     "score": 0.2334
+    },
+    {
+     "id": "resp-bronchitis",
+     "score": 0.2329
+    },
+    {
+     "id": "gi-constipation",
+     "score": 0.1536
+    }
+   ]
+  },
+  {
+   "q": "I twisted my ankle playing football",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "msk-sprain",
+     "score": 0.3054
+    },
+    {
+     "id": "derm-eczema",
+     "score": 0.0995
+    }
+   ]
+  },
+  {
+   "q": "heartburn after spicy food",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "gi-acid-reflux",
+     "score": 0.5002
+    },
+    {
+     "id": "cardio-chest-pain",
+     "score": 0.1265
+    },
+    {
+     "id": "gi-food-allergy",
+     "score": 0.1071
+    }
+   ]
+  },
+  {
+   "q": "can't sleep at night",
+   "level": "green",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "neuro-insomnia",
+     "score": 0.2532
+    },
+    {
+     "id": "gi-ibs",
+     "score": 0.1218
+    }
+   ]
+  },
+  {
+   "q": "my blood looks weird",
+   "level": "yellow",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "cardio-hypertension",
+     "score": 0.2309
+    },
+    {
+     "id": "gen-diabetes-symptoms",
+     "score": 0.1432
+    },
+    {
+     "id": "inf-uti",
+     "score": 0.1332
+    }
+   ]
+  },
+  {
+   "q": "pain",
+   "level": "red",
+   "redFlag": null,
+   "top": [
+    {
+     "id": "gi-appendicitis",
+     "score": 0.1278
+    },
+    {
+     "id": "msk-back-pain",
+     "score": 0.1227
+    },
+    {
+     "id": "cardio-chest-pain",
+     "score": 0.1208
+    }
+   ]
+  },
+  {
+   "q": "I feel tired all the time",
+   "level": "green",
+   "redFlag": null,
+   "top": []
+  },
+  {
+   "q": "what is the capital of France",
+   "level": "none",
+   "redFlag": null,
+   "top": []
+  },
+  {
+   "q": "",
+   "level": "none",
+   "redFlag": null,
+   "top": []
+  }
+ ]
+}
