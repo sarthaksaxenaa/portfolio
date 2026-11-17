@@ -108,7 +108,7 @@ export const Experience = z.object({
 });
 export type Experience = z.infer<typeof Experience>;
 
-export const ChapterId = z.enum(["warmup", "work", "grind", "rideshare", "carenexus", "overload", "cooldown"]);
+export const ChapterId = z.enum(["warmup", "work", "grind", "rideshare", "carenexus", "skills", "cooldown"]);
 export type ChapterId = z.infer<typeof ChapterId>;
 
 export const Chapter = z.object({

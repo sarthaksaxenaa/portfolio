@@ -485,6 +485,211 @@ html[data-motion="on"]:is(:not([data-preload]), [data-preload="burst"]) .hero-su
   object-position: top;
 }
 
+/* What I build: each skill is a dark glass panel. On tall screens they stack: each sticks below
+   the menu and the next slides over it, a little lower, like cards dealt onto a pile. */
+.skill-panel {
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 22px;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  background: rgb(9 9 11 / 0.94);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -24px 60px -30px rgb(0 0 0 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.05);
+}
+@media (min-width: 768px) and (min-height: 820px) {
+  .skill-panel {
+    position: sticky;
+    top: calc(6rem + var(--i, 0) * 1.5rem);
+  }
+}
+
+.demo {
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: rgb(255 255 255 / 0.02);
+}
+
+/* Two-way switch: the pressed side is filled. */
+.seg {
+  display: inline-flex;
+  align-self: flex-start;
+  border: 1px solid var(--color-hairline);
+  border-radius: 999px;
+  padding: 3px;
+}
+.seg > button {
+  border-radius: 999px;
+  padding: 0.4rem 0.95rem;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  transition: background-color 0.2s, color 0.2s;
+}
+.seg > button[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+/* Ride race: two lanes into the trip. */
+.race {
+  display: grid;
+  gap: 0.75rem;
+}
+.race-lane {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr 7.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+}
+@media (max-width: 479px) {
+  .race-lane {
+    grid-template-columns: 3.9rem 1fr 6.4rem;
+    gap: 0.5rem;
+  }
+  .triage-steps li {
+    grid-template-columns: 6.2rem 1fr;
+  }
+}
+.race-name {
+  font-family: var(--font-mono);
+  color: var(--color-text);
+}
+.race-track {
+  position: relative;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: linear-gradient(to right, transparent, rgb(255 255 255 / 0.1)) center / 100% 1px no-repeat;
+}
+.race-dot {
+  position: absolute;
+  top: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--color-text);
+  box-shadow: 0 0 12px rgb(255 255 255 / 0.6);
+}
+.race-result {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  text-align: right;
+}
+.race-lane[data-outcome="assigned"] .race-result {
+  color: var(--color-text);
+}
+.race-lane[data-outcome="taken"] .race-result,
+.race-lane[data-outcome="taken"] .race-dot {
+  color: var(--color-muted);
+  background-color: transparent;
+}
+.race-lane[data-outcome="taken"] .race-dot {
+  border: 1px solid var(--color-muted);
+  box-shadow: none;
+}
+.race-trip {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-hairline);
+  padding-top: 0.75rem;
+}
+.race-trip[data-double] span:last-child {
+  color: var(--color-signal);
+}
+.race-log,
+.triage-steps {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 3.2rem;
+}
+.race-log li {
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--color-muted);
+}
+.race-log li,
+.triage-steps li {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.race-log li[data-shown],
+.triage-steps li[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Pocket triage: each step of the decision, then the level. */
+.triage-steps li {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  border-left: 1px solid var(--color-hairline);
+  padding-left: 0.75rem;
+}
+.triage-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+.triage-level::before {
+  content: "";
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: var(--color-muted);
+}
+.triage-level[data-level="green"]::before { background: #46a758; }
+.triage-level[data-level="yellow"]::before { background: #f5d90a; }
+.triage-level[data-level="red"]::before { background: var(--color-signal); box-shadow: 0 0 14px var(--color-signal); }
+
+/* Test replay: one square per test. */
+.test-grid {
+  display: grid;
+  grid-template-columns: repeat(30, minmax(0, 1fr));
+  gap: 3px;
+}
+@media (max-width: 639px) {
+  .test-grid {
+    grid-template-columns: repeat(19, minmax(0, 1fr));
+  }
+}
+.test-grid > span,
+.test-key {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.06);
+}
+.test-grid > span[data-ran][data-suite="0"],
+.test-key[data-suite="0"] { background: rgb(255 255 255 / 0.85); }
+.test-grid > span[data-ran][data-suite="1"],
+.test-key[data-suite="1"] { background: rgb(255 255 255 / 0.5); }
+.test-grid > span[data-ran][data-suite="2"],
+.test-key[data-suite="2"] { background: #9a9aa3; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.9); }
+.test-key {
+  width: 0.6rem;
+  height: 0.6rem;
+}
+.test-grid > span:hover {
+  outline: 1px solid var(--color-signal);
+}
+@media (prefers-reduced-motion: reduce) {
+  .race-log li,
+  .triage-steps li {
+    transition: none;
+  }
+}
+
 /* Behind the menu once you scroll: solid where the links sit, fading out below the bar. */
 .nav-fade {
   position: absolute;

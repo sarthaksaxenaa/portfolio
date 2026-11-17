@@ -5,9 +5,9 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { AdditiveBlending, Color, type BufferAttribute, type ShaderMaterial } from "three";
 import { damp } from "@/lib/cursor";
 import { fibonacciSphere, seeds } from "@/lib/sphere";
-import { CHAPTER_OPACITY, MORPH_INDEX, body, grid, roads } from "@/lib/morphTargets";
+import { CHAPTER_OPACITY, FOCUS_MORPH, MORPH_INDEX, body, grid, roads } from "@/lib/morphTargets";
 import { PORTRAIT_SRC, samplePortrait } from "@/lib/portraitPoints";
-import { CHAPTER_EVENT } from "@/lib/sceneEvents";
+import { CHAPTER_EVENT, SCENE_FOCUS_EVENT } from "@/lib/sceneEvents";
 import { fragmentShader, vertexShader } from "./shaders";
 import { CAM_Z, FOV, HALF_Y, placements } from "@/lib/scenePlacement";
 
@@ -27,7 +27,13 @@ const currentChapter = () => document.documentElement.getAttribute("data-chapter
 function Field({ count, animate }: { count: number; animate: boolean }) {
   const material = useRef<ShaderMaterial>(null);
   const pointer = useRef({ x: FAR, y: FAR, force: 0, target: 0 });
-  const state = useRef({ morph: 0, opacity: 0, chapter: "warmup", rot: 0 });
+  const state = useRef<{ morph: number; opacity: number; chapter: string; focus: string | null; rot: number }>({
+    morph: 0,
+    opacity: 0,
+    chapter: "warmup",
+    focus: null,
+    rot: 0,
+  });
   const portraitAttr = useRef<BufferAttribute>(null);
   const intro = useRef<{ start: number | null; ready: boolean }>({ start: null, ready: false });
   const { gl, invalidate, size } = useThree();
@@ -107,11 +113,18 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
       state.current.chapter = (e as CustomEvent<string>).detail ?? currentChapter();
       invalidate();
     };
+    // A demo panel in "What I build" can take over the shape while it is on show.
+    const onFocus = (e: Event) => {
+      state.current.focus = (e as CustomEvent<string | null>).detail ?? null;
+      invalidate();
+    };
     const onScroll = () => invalidate();
     window.addEventListener(CHAPTER_EVENT, onChapter);
+    window.addEventListener(SCENE_FOCUS_EVENT, onFocus);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener(CHAPTER_EVENT, onChapter);
+      window.removeEventListener(SCENE_FOCUS_EVENT, onFocus);
       window.removeEventListener("scroll", onScroll);
     };
   }, [invalidate]);
@@ -175,7 +188,8 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
     }
     u.uIntro.value = !animate ? (it.ready ? 1 : 0) : it.start === null ? 0 : Math.min(1, (performance.now() - it.start) / INTRO_MS);
 
-    const targetMorph = MORPH_INDEX[s.chapter] ?? 0;
+    const focused = s.focus !== null ? FOCUS_MORPH[s.focus] : undefined;
+    const targetMorph = focused ?? MORPH_INDEX[s.chapter] ?? 0;
     const targetOpacity = CHAPTER_OPACITY[s.chapter] ?? 0.25;
 
     if (!animate) {

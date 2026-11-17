@@ -55,7 +55,7 @@ describe("home page", () => {
       "Home",
       "Experience",
       "Projects",
-      "Focus",
+      "Skills",
       "Contact",
       "Contact",
       "Resume (opens in a new tab)",

@@ -10,7 +10,7 @@ export const chapters: Chapter[] = Chapters.parse([
   { id: "grind", index: "02", label: "Experience", title: "Reps before records" },
   { id: "rideshare", index: "03", label: "Project · Real-time systems", title: "RideShare" },
   { id: "carenexus", index: "04", label: "Project · Applied AI", title: "CareNexus" },
-  { id: "overload", index: "05", label: "Focus", title: "Next weight on the bar" },
+  { id: "skills", index: "05", label: "What I build", title: "Try the work" },
   { id: "cooldown", index: "06", label: "Contact", title: "Say hi" },
 ]);
 
@@ -19,7 +19,7 @@ export const navItems = [
   { label: "Home", href: "#warmup", chapters: ["warmup"] },
   { label: "Experience", href: "#grind", chapters: ["grind"] },
   { label: "Projects", href: "#work", chapters: ["work", "rideshare", "carenexus"] },
-  { label: "Focus", href: "#overload", chapters: ["overload"] },
+  { label: "Skills", href: "#skills", chapters: ["skills"] },
   { label: "Contact", href: "#cooldown", chapters: ["cooldown"] },
 ] as const satisfies ReadonlyArray<{ label: string; href: `#${Chapter["id"]}`; chapters: ReadonlyArray<Chapter["id"]> }>;
 

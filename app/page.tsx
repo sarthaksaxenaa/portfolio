@@ -3,7 +3,7 @@ import { Warmup } from "@/components/chapters/Warmup";
 import { Work } from "@/components/chapters/Work";
 import { Grind } from "@/components/chapters/Grind";
 import { ProjectChapter } from "@/components/chapters/ProjectChapter";
-import { Overload } from "@/components/chapters/Overload";
+import { Skills } from "@/components/chapters/Skills";
 import { Cooldown } from "@/components/chapters/Cooldown";
 import { chapterById } from "@/content/chapters";
 import { carenexus, rideshare } from "@/content/projects";
@@ -28,7 +28,7 @@ export default function Home() {
           project={carenexus}
           lead="The turning point. I found my own retriever matching the wrong words, fixed the cause, and stopped trusting any number I had not measured."
         />
-        <Overload />
+        <Skills />
         <Cooldown />
       </main>
     </>

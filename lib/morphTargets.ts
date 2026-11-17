@@ -133,8 +133,16 @@ export const MORPH_INDEX: Record<string, number> = {
   grind: 1,
   rideshare: 2,
   carenexus: 3,
-  overload: 4,
+  skills: 4,
   cooldown: 4,
+};
+
+/** Inside "What I build", each demo reshapes the particles while it is on show: rides travel the
+ *  roads, the triage check takes the body, and the test replay lays out the grid. */
+export const FOCUS_MORPH: Record<string, number> = {
+  realtime: 2,
+  ai: 3,
+  tested: 1,
 };
 
 /**
@@ -147,6 +155,6 @@ export const CHAPTER_OPACITY: Record<string, number> = {
   grind: 0.2,
   rideshare: 0.16,
   carenexus: 0.2,
-  overload: 0.22,
+  skills: 0.24,
   cooldown: 0.5,
 };

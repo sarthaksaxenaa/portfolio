@@ -79,6 +79,6 @@ describe("morph targets", () => {
       }
     }
     expect(MORPH_INDEX.cooldown).toBe(4); // sphere
-    expect(CHAPTER_OPACITY.cooldown).toBeGreaterThan(CHAPTER_OPACITY.overload);
+    expect(CHAPTER_OPACITY.cooldown).toBeGreaterThan(CHAPTER_OPACITY.skills);
   });
 });

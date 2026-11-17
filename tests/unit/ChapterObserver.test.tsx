@@ -74,7 +74,7 @@ describe("ChapterObserver", () => {
     expect(current()).toBe("#work");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("155 107 255");
     await scrollTo(5 * H);
-    expect(current()).toBe("#overload");
+    expect(current()).toBe("#skills");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
 
