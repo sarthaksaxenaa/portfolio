@@ -31,6 +31,15 @@ describe("preload boot script", () => {
   it("marks the page on a first visit with motion on", () => expect(boot({ seen: false })).toBe("on"));
   it("skips on a repeat visit in the same session", () => expect(boot({ seen: true })).toBeNull());
   it("skips for reduced-motion visitors", () => expect(boot({ seen: false, reduced: true })).toBeNull());
+  it("plays only on the home page, not when a visit starts on a case study", () => {
+    window.history.pushState({}, "", "/work/carenexus");
+    try {
+      expect(boot({ seen: false })).toBeNull();
+    } finally {
+      window.history.pushState({}, "", "/");
+    }
+    expect(boot({ seen: false })).toBe("on");
+  });
   it("does not throw when sessionStorage is blocked", () => {
     const spy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("blocked");
