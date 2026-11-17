@@ -71,7 +71,8 @@ describe("home page", () => {
     const mailtos = [...container.querySelectorAll('a[href^="mailto:"]')].map((a) => a.getAttribute("href"));
     expect(mailtos.length).toBeGreaterThan(0);
     expect(new Set(mailtos)).toEqual(new Set([`mailto:${PUBLIC_EMAIL}`]));
-    expect(container.textContent).not.toContain("sarthak-private-address");
+    // With the public address taken out, no other address is left anywhere in the page's text.
+    expect(container.textContent!.replaceAll(PUBLIC_EMAIL, " ")).not.toMatch(/@[\w-]+\.[a-z]{2,}/i);
   });
 
   it("every stat on the page shows where it came from", () => {

@@ -58,7 +58,7 @@ describe("Profile and links", () => {
     expect(pdf.byteLength).toBeLessThan(400_000);
   });
   it("only allows the public professional email", () => {
-    expect(ok(Profile, { ...base, email: "180917503+sarthaksaxenaa@users.noreply.github.com" })).toBe(false);
+    expect(ok(Profile, { ...base, email: "someone.else@gmail.com" })).toBe(false);
     expect(profile.email).toBe(PUBLIC_EMAIL);
   });
   it("rejects http and javascript links", () => {
