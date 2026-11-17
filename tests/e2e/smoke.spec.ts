@@ -60,15 +60,17 @@ test("canonical URL points at the production domain", async ({ page }) => {
 });
 
 test("no sideways overflow on phones, tablets and laptops, even with the light at the right edge", async ({ page }) => {
+  test.slow(); // six widths, each scrolled top to bottom
   for (const width of [320, 360, 390, 768, 1024, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/");
     await page.mouse.move(width - 4, 400, { steps: 3 }); // the 720px glow follows the pointer to the edge
-    const worst = await page.evaluate(async () => {
+    // Reading scrollWidth forces layout, so no animation frames are needed (headless WebKit on CI
+    // does not reliably deliver them).
+    const worst = await page.evaluate(() => {
       let max = 0;
       for (let y = 0; y < document.documentElement.scrollHeight; y += 500) {
         window.scrollTo(0, y);
-        await new Promise((r) => requestAnimationFrame(r));
         max = Math.max(max, document.documentElement.scrollWidth - document.documentElement.clientWidth);
       }
       return max;
