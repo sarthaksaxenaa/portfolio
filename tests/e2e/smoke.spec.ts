@@ -111,7 +111,7 @@ test.describe("cursor light", () => {
         const r = document.querySelector(".cursor-ring")!.getBoundingClientRect();
         return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
       });
-    for (const name of ["Focus", "Experience"]) {
+    for (const name of ["Skills", "Experience"]) {
       const box = (await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name }).boundingBox())!;
       const x = box.x + box.width / 2;
       const y = box.y + box.height / 2;
@@ -155,7 +155,7 @@ test.describe("motion", () => {
     await page.goto("/");
     await expect(page.locator("html")).toHaveAttribute("data-motion", "on");
     await expect(page.locator("html")).toHaveClass(/lenis/);
-    const heading = page.locator("#overload-heading");
+    const heading = page.locator("#grind-heading");
     await heading.scrollIntoViewIfNeeded();
     await expect(heading).toHaveAttribute("data-split-ready", "");
     await expect(heading).toBeVisible();
@@ -174,7 +174,7 @@ test.describe("motion", () => {
     await expect(page.locator("html")).toHaveAttribute("data-motion", "off");
     await expect(page.locator("html")).not.toHaveClass(/lenis/);
     await expect(page.getByTestId("cursor-light")).toHaveCount(0);
-    await expect(page.locator("#overload-heading")).not.toHaveAttribute("data-split-ready", "");
+    await expect(page.locator("#grind-heading")).not.toHaveAttribute("data-split-ready", "");
     await ctx.close();
   });
 
@@ -351,6 +351,83 @@ test.describe("featured work", () => {
     // Only CareNexus has a phone view.
     await expect(page.locator('article[aria-labelledby="work-carenexus"] .phone')).toHaveCount(1);
     await expect(page.locator('article[aria-labelledby="work-rideshare"] .phone')).toHaveCount(0);
+  });
+});
+
+test.describe("what I build", () => {
+  test("the race: with the lock one driver wins, without it the ride is double-booked", async ({ page }) => {
+    await page.goto("/");
+    const panel = page.locator('[data-scene="realtime"]');
+    await panel.scrollIntoViewIfNeeded();
+    await expect(page.locator('nav a[aria-current="location"]')).toHaveText("Skills");
+    await panel.getByRole("button", { name: "Both accept" }).click();
+    await expect(panel.getByTestId("race-verdict")).toHaveText(/got the ride.*changed 0 rows/, { timeout: 6000 });
+    await expect(panel.locator('[data-outcome="assigned"]')).toHaveCount(1);
+    await panel.getByRole("button", { name: "Without it" }).click();
+    await panel.getByRole("button", { name: "Both accept" }).click();
+    await expect(panel.getByTestId("race-verdict")).toHaveText(/Double-booked/, { timeout: 6000 });
+    await expect(panel.locator('[data-outcome="assigned"]')).toHaveCount(2);
+  });
+
+  test("the triage check answers in the browser, without sending what you type anywhere", async ({ page }) => {
+    const sent: string[] = [];
+    await page.goto("/");
+    const panel = page.locator('[data-scene="ai"]');
+    await panel.scrollIntoViewIfNeeded();
+    await panel.getByRole("button", { name: "sore throat for 3 days" }).click();
+    await expect(panel.getByTestId("triage-result")).toContainText("See a doctor soon");
+    page.on("request", (r) => sent.push(r.url()));
+    const input = panel.getByLabel("Describe a symptom");
+    await input.fill("my chest feels tight and heavy");
+    await input.press("Enter");
+    await expect(panel.getByTestId("triage-result")).toContainText(/Emergency/);
+    expect(sent.filter((u) => /chest|tight/.test(decodeURIComponent(u)))).toEqual([]);
+  });
+
+  test("the test replay fills all 570 squares when it comes into view", async ({ page }) => {
+    await page.goto("/");
+    const panel = page.locator('[data-scene="tested"]');
+    await panel.scrollIntoViewIfNeeded();
+    await expect(panel.locator(".test-grid > span")).toHaveCount(570);
+    await expect(panel.locator(".test-grid > span[data-ran]")).toHaveCount(570, { timeout: 8000 });
+    await expect(panel).toContainText("570 / 570 passed");
+  });
+
+  test("each demo reshapes the particles behind it, then hands the shape back", async ({ page }) => {
+    type W = Window & { focus_: (string | null)[] };
+    await page.addInitScript(() => {
+      (window as unknown as W).focus_ = [];
+      window.addEventListener("scenefocus", (e) => (window as unknown as W).focus_.push((e as CustomEvent).detail));
+    });
+    await page.goto("/");
+    const lastFocus = () => page.evaluate(() => (window as unknown as W).focus_.at(-1) ?? null);
+    // Scroll the way a person does (smooth scroll owns the position), until each panel is on show.
+    const wheelUntil = async (want: string | null) => {
+      for (let i = 0; i < 80 && (await lastFocus()) !== want; i++) {
+        await page.mouse.wheel(0, 160);
+        await page.waitForTimeout(60);
+      }
+      expect(await lastFocus()).toBe(want);
+    };
+    await page.mouse.move(640, 360);
+    await page.locator("#skills-heading").scrollIntoViewIfNeeded();
+    for (const s of ["realtime", "ai", "tested"]) await wheelUntil(s);
+    await wheelUntil(null); // past the last panel, into Contact
+    const seen = await page.evaluate(() => (window as unknown as W).focus_.filter(Boolean));
+    expect([...new Set(seen)]).toEqual(["realtime", "ai", "tested"]);
+  });
+
+  test("on a phone the demos fit the screen and still work", async ({ browser }) => {
+    const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
+    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
+    const page = await ctx.newPage();
+    await page.goto("/");
+    const panel = page.locator('[data-scene="realtime"]');
+    await panel.scrollIntoViewIfNeeded();
+    await panel.getByRole("button", { name: "Both accept" }).tap();
+    await expect(panel.getByTestId("race-verdict")).not.toBeEmpty({ timeout: 6000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await ctx.close();
   });
 });
 
