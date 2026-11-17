@@ -27,12 +27,13 @@ const currentChapter = () => document.documentElement.getAttribute("data-chapter
 function Field({ count, animate }: { count: number; animate: boolean }) {
   const material = useRef<ShaderMaterial>(null);
   const pointer = useRef({ x: FAR, y: FAR, force: 0, target: 0 });
-  const state = useRef<{ morph: number; opacity: number; chapter: string; focus: string | null; rot: number }>({
+  const state = useRef<{ morph: number; opacity: number; chapter: string; focus: string | null; rot: number; placed: boolean }>({
     morph: 0,
     opacity: 0,
     chapter: "warmup",
     focus: null,
     rot: 0,
+    placed: false,
   });
   const portraitAttr = useRef<BufferAttribute>(null);
   const intro = useRef<{ start: number | null; ready: boolean }>({ start: null, ready: false });
@@ -191,6 +192,13 @@ function Field({ count, animate }: { count: number; animate: boolean }) {
     const focused = s.focus !== null ? FOCUS_MORPH[s.focus] : undefined;
     const targetMorph = focused ?? MORPH_INDEX[s.chapter] ?? 0;
     const targetOpacity = CHAPTER_OPACITY[s.chapter] ?? 0.25;
+
+    // The first frame starts in the shape of wherever the page is (a case-study page, or a reload
+    // halfway down), instead of visibly morphing out of the portrait. It still fades in.
+    if (!s.placed) {
+      s.placed = true;
+      s.morph = targetMorph;
+    }
 
     if (!animate) {
       s.morph = targetMorph;
