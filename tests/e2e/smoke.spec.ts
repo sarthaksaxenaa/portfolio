@@ -34,8 +34,8 @@ test("every stylesheet and script on the page loads", async ({ page }) => {
 test("nav links scroll to their chapters", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Projects" }).click();
-  await expect(page).toHaveURL(/#rideshare$/);
-  await expect(page.locator("#rideshare")).toBeInViewport();
+  await expect(page).toHaveURL(/#work$/);
+  await expect(page.locator("#work-heading")).toBeInViewport();
 });
 
 test("a deep link to a section below the pinned track lands on that section", async ({ page }) => {
@@ -308,6 +308,49 @@ test.describe("resume", () => {
     await page.goto("/");
     await expect(page.getByTestId("nav-resume")).toBeVisible();
     await ctx.close();
+  });
+});
+
+test.describe("featured work", () => {
+  test("two projects on laptops that step through real screens as they scroll, with Projects lit", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: /Featured\s*Engineering/ })).toBeAttached();
+    const laptops = page.locator("#work [data-device]");
+    await expect(laptops).toHaveCount(2);
+    const first = laptops.first();
+    await first.scrollIntoViewIfNeeded();
+    await expect(page.locator('nav a[data-chapters~="work"]')).toHaveAttribute("aria-current", "location");
+    // Scroll through the first laptop: its screen changes at least once.
+    const seen = new Set<string>();
+    for (let i = 0; i < 8; i++) {
+      seen.add((await first.getAttribute("data-active")) ?? "");
+      await page.mouse.wheel(0, 140);
+      await page.waitForTimeout(120);
+    }
+    expect(seen.size).toBeGreaterThan(1);
+    // Every shot actually loads.
+    const broken = await page
+      .locator("#work img")
+      .evaluateAll((imgs) => (imgs as HTMLImageElement[]).filter((i) => i.complete && i.naturalWidth === 0).length);
+    expect(broken).toBe(0);
+  });
+
+  test("each card links its live site and code in a new tab, and its case study on the page", async ({ page }) => {
+    await page.goto("/");
+    for (const [slug, live] of [
+      ["rideshare", "https://rideshare-platform.vercel.app"],
+      ["carenexus", "https://carenexus-health.vercel.app"],
+    ]) {
+      const card = page.locator(`article[aria-labelledby="work-${slug}"]`);
+      await card.scrollIntoViewIfNeeded(); // the text reveals as it scrolls in
+      await expect(card.getByRole("link", { name: /Live site/ })).toHaveAttribute("href", live);
+      await expect(card.getByRole("link", { name: /Live site/ })).toHaveAttribute("target", "_blank");
+      await expect(card.getByRole("link", { name: /Code/ })).toHaveAttribute("target", "_blank");
+      await expect(card.getByRole("link", { name: "Case study" })).toHaveAttribute("href", `#${slug}`);
+    }
+    // Only CareNexus has a phone view.
+    await expect(page.locator('article[aria-labelledby="work-carenexus"] .phone')).toHaveCount(1);
+    await expect(page.locator('article[aria-labelledby="work-rideshare"] .phone')).toHaveCount(0);
   });
 });
 
