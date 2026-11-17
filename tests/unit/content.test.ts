@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Chapters, Decision, Profile, Project, PUBLIC_EMAIL, Stat } from "@/content/schema";
-import { chapters, navItems } from "@/content/chapters";
+import { chapters, homeChapters, navItems } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { carenexus, prodigy, projects, rideshare } from "@/content/projects";
 import { contrastRatio, color } from "@/lib/tokens";
@@ -154,6 +154,14 @@ describe("Featured work", () => {
     bad[2] = { ...bad[2], path: "/work/oops" };
     expect(ok(Chapters, bad)).toBe(false);
     expect(ok(Chapters, chapters.map((c, i) => (i === 5 ? { ...c, path: "/case/rideshare" } : c)))).toBe(false);
+  });
+
+  it("the menu lists the sections in the order they come down the page", () => {
+    expect(navItems.map((n) => n.label)).toEqual(["Home", "Projects", "Experience", "Skills", "Contact"]);
+    const order = homeChapters.map((c) => c.id);
+    const positions = navItems.map((n) => order.indexOf(n.href.slice(1) as (typeof order)[number]));
+    expect(positions.every((p) => p >= 0)).toBe(true);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
   it("nav Projects opens the featured work and stays lit through both case studies", () => {

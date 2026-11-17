@@ -53,8 +53,8 @@ describe("home page", () => {
     expect(within(nav).getAllByRole("link").map((a) => a.textContent)).toEqual([
       "Sarthak SaxenaSoftware Developer",
       "Home",
-      "Experience",
       "Projects",
+      "Experience",
       "Skills",
       "Contact",
       "Contact",
