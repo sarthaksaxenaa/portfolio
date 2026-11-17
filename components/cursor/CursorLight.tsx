@@ -175,8 +175,12 @@ export function CursorLight() {
 
   return (
     <div aria-hidden="true" data-testid="cursor-light" data-mode={mode} className="cursor-layers">
-      <div className="cursor-dots" />
-      <div ref={glowRef} className="cursor-glow" />
+      {/* The glow is a 720px circle that follows the pointer; clipped here so near an edge it never
+          widens the page (which let phones scroll sideways). */}
+      <div className="cursor-clip">
+        <div className="cursor-dots" />
+        <div ref={glowRef} className="cursor-glow" />
+      </div>
       {mode === "full" ? (
         <>
           <div ref={ringRef} className="cursor-ring" />

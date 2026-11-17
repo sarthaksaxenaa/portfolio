@@ -72,6 +72,18 @@ html[data-cursor-visible="true"] .cursor-layers > * {
   opacity: 1;
 }
 
+/* Fixed, screen-sized and clipping: the glow and dots inside are positioned against it (contain:
+   paint makes it their containing block), so they never stick out past the screen. */
+.cursor-clip {
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  contain: paint;
+}
+.cursor-clip > * {
+  position: absolute;
+}
+
 .cursor-dots {
   inset: 0;
   z-index: 0;

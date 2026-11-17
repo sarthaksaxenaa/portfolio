@@ -97,7 +97,7 @@ function Featured({ project, flip }: { project: Project; flip?: boolean }) {
 /** Featured engineering: each project on a laptop that steps through its real screens. */
 export function Work() {
   return (
-    <section id="work" aria-labelledby="work-heading" className="relative mx-auto max-w-7xl px-6 py-24 md:py-36">
+    <section id="work" aria-labelledby="work-heading" className="relative mx-auto max-w-7xl overflow-x-clip px-6 py-24 md:py-36">
       <div className="mb-16 flex flex-col gap-3 md:mb-24">
         <p className="font-mono text-xs uppercase tracking-[0.35em] text-muted">{chapter.label}</p>
         <h2
