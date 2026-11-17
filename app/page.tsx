@@ -1,5 +1,6 @@
 import { Nav } from "@/components/ui/Nav";
 import { Warmup } from "@/components/chapters/Warmup";
+import { Work } from "@/components/chapters/Work";
 import { Grind } from "@/components/chapters/Grind";
 import { ProjectChapter } from "@/components/chapters/ProjectChapter";
 import { Overload } from "@/components/chapters/Overload";
@@ -15,6 +16,7 @@ export default function Home() {
       <Nav />
       <main id="main">
         <Warmup />
+        <Work />
         <Grind />
         <ProjectChapter
           chapter={chapterById("rideshare")}

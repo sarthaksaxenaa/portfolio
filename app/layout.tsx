@@ -14,6 +14,7 @@ import { SceneLayer } from "@/components/scene/SceneLayer";
 import { motionBootScript, preloadBootScript } from "@/lib/motion";
 import { Opening } from "@/components/motion/Opening";
 import { Magnetic } from "@/components/motion/Magnetic";
+import { Devices } from "@/components/motion/Devices";
 import "./globals.css";
 
 const instrumentSerif = localFont({
@@ -84,6 +85,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <PinnedTracks />
           <ChapterObserver />
           <Magnetic />
+          <Devices />
           <Opening />
         </MotionProvider>
       </body>
