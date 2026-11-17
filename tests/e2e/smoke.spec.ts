@@ -59,14 +59,44 @@ test("canonical URL points at the production domain", async ({ page }) => {
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://sarthxen.vercel.app");
 });
 
-test("no horizontal overflow on a 360px phone", async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 740 });
-  await page.goto("/");
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-  );
-  expect(overflow).toBeLessThanOrEqual(0);
+test("no sideways overflow on phones, tablets and laptops, even with the light at the right edge", async ({ page }) => {
+  for (const width of [320, 360, 390, 768, 1024, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/");
+    await page.mouse.move(width - 4, 400, { steps: 3 }); // the 720px glow follows the pointer to the edge
+    const worst = await page.evaluate(async () => {
+      let max = 0;
+      for (let y = 0; y < document.documentElement.scrollHeight; y += 500) {
+        window.scrollTo(0, y);
+        await new Promise((r) => requestAnimationFrame(r));
+        max = Math.max(max, document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      }
+      return max;
+    });
+    expect(worst, `${width}px`).toBeLessThanOrEqual(0);
+  }
 });
+
+for (const [device, viewport] of [["phone", { width: 390, height: 844 }], ["tablet", { width: 820, height: 1180 }]] as const) {
+  test(`on a ${device}, the whole menu shows and every link works`, async ({ browser }) => {
+    const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport });
+    await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
+    const page = await ctx.newPage();
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Sections" });
+    const labels = ["Home", "Projects", "Experience", "Skills", "Contact"];
+    await expect(nav.locator("ul a")).toHaveText(labels);
+    for (const name of labels) await expect(nav.getByRole("link", { name, exact: true })).toBeInViewport();
+    await expect(nav.getByTestId("nav-resume")).toBeInViewport();
+    for (const [name, hash] of [["Experience", "grind"], ["Skills", "skills"], ["Contact", "cooldown"], ["Projects", "work"]] as const) {
+      await nav.getByRole("link", { name, exact: true }).tap();
+      await expect(page).toHaveURL(new RegExp(`#${hash}$`));
+      // Contact is the last, short section: it lights once the page reaches the bottom.
+      await expect(nav.locator('a[aria-current="location"]')).toHaveText(name, { timeout: 6000 });
+    }
+    await ctx.close();
+  });
+}
 
 test("unknown routes return a styled 404 with a way back", async ({ page }) => {
   const res = await page.goto("/this-page-does-not-exist");
@@ -405,6 +435,18 @@ test.describe("what I build", () => {
     await input.press("Enter");
     await expect(panel.getByTestId("triage-result")).toContainText(/Emergency/);
     expect(sent.filter((u) => /chest|tight/.test(decodeURIComponent(u)))).toEqual([]);
+  });
+
+  test("the section keeps its height when the demo data loads, so links scrolling past land true", async ({ page }) => {
+    const height = () => page.evaluate(() => Math.round(document.getElementById("skills")!.getBoundingClientRect().height));
+    await page.route("**/demos/*.json", () => new Promise(() => {})); // data held back
+    await page.goto("/");
+    const before = await height();
+    await page.unroute("**/demos/*.json");
+    await page.reload();
+    await page.locator('[data-scene="tested"]').scrollIntoViewIfNeeded();
+    await expect(page.locator('[data-scene="tested"] .test-grid > span[data-suite]')).toHaveCount(570);
+    expect(Math.abs((await height()) - before)).toBeLessThanOrEqual(2);
   });
 
   test("the test replay fills all 570 squares when it comes into view", async ({ page }) => {
