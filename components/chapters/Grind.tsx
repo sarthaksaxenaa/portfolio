@@ -7,7 +7,7 @@ import { StatTile } from "@/components/ui/StatTile";
 
 const reps = [
   { value: "500+", label: "DSA problems, LeetCode and GeeksforGeeks" },
-  { value: "1650", label: "LeetCode rating" },
+  { value: "1645", label: "Peak LeetCode rating" },
   { value: profile.education.cgpa ?? "", label: `CGPA, ${profile.education.years}` },
 ];
 

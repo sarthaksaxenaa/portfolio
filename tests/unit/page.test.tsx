@@ -102,6 +102,13 @@ describe("home page", () => {
     });
   });
 
+  it("shows the peak LeetCode rating from the résumé (1645), not a rounded one", () => {
+    // Source: public/Sarthak_Saxena_Resume.pdf ("peak ratings: LeetCode 1645"). Change both together.
+    render(<Home />);
+    const label = screen.getByText("Peak LeetCode rating");
+    expect(label.parentElement).toHaveTextContent("1645");
+  });
+
   it("keeps the case studies off the home page and links each card to its page", () => {
     const { container } = render(<Home />);
     for (const c of chapters.filter((x) => x.path)) {
