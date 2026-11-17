@@ -38,14 +38,12 @@ test("nav links scroll to their chapters", async ({ page }) => {
   await expect(page.locator("#work-heading")).toBeInViewport();
 });
 
-test("a deep link to a section below the pinned track lands on that section", async ({ page }) => {
+test("a deep link to a section lands on that section", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/#carenexus");
-  await expect(page.locator("#rideshare [data-pin]")).toHaveClass(/is-pinned/);
+  await page.goto("/#skills");
   await expect
-    .poll(() => page.locator("#carenexus").evaluate((el) => Math.round(el.getBoundingClientRect().top)))
+    .poll(() => page.locator("#skills").evaluate((el) => Math.round(el.getBoundingClientRect().top)))
     .toBeLessThan(120);
-  await expect(page.locator("#carenexus-heading")).toBeInViewport();
 });
 
 test("the portrait the particles are sampled from is served", async ({ page, request }) => {
@@ -183,15 +181,44 @@ test.describe("motion", () => {
     const page = await ctx.newPage();
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator("#carenexus-heading")).toBeVisible();
+    await expect(page.locator("#grind-heading")).toBeVisible();
+    await page.goto("/work/carenexus");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("CareNexus");
+    await expect(page.getByText("Retrieval kept surfacing the wrong conditions.")).toBeVisible();
     await ctx.close();
   });
 });
 
 test.describe("case studies", () => {
+  test("each Featured card opens its case study page, which links home and to the next one", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.goto("/");
+    const card = page.locator('article[aria-labelledby="work-rideshare"]');
+    await card.scrollIntoViewIfNeeded();
+    await card.getByRole("link", { name: "Case study" }).click();
+    await expect(page).toHaveURL(/\/work\/rideshare$/);
+    await expect(page).toHaveTitle("RideShare case study · Sarthak Saxena");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("RideShare");
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://sarthxen.vercel.app/work/rideshare");
+    await page.getByRole("link", { name: /Next case study/ }).click();
+    await expect(page).toHaveURL(/\/work\/carenexus$/);
+    await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Skills" }).click();
+    await expect(page).toHaveURL(/\/#skills$/);
+    expect(errors).toEqual([]);
+  });
+
+  test("the opening never plays when a visit starts on a case study, and unknown ones are 404s", async ({ page, request }) => {
+    await page.addInitScript(() => sessionStorage.removeItem("sarthxen:preloaded"));
+    await page.goto("/work/carenexus");
+    expect(await page.evaluate(() => document.documentElement.getAttribute("data-preload"))).toBeNull();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    expect((await request.get("/work/skillmatrix")).status()).toBe(404);
+  });
+
   test("decisions pin and walk sideways on desktop, without page overflow", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/");
+    await page.goto("/work/rideshare");
     const block = page.locator("#rideshare [data-pin]");
     await expect(block).toHaveClass(/is-pinned/);
     const track = block.locator("[data-pin-track]");
@@ -212,7 +239,7 @@ test.describe("case studies", () => {
     const ctx = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
     await ctx.addInitScript(() => sessionStorage.setItem("sarthxen:preloaded", "1"));
     const page = await ctx.newPage();
-    await page.goto("/");
+    await page.goto("/work/rideshare");
     const block = page.locator("#rideshare [data-pin]");
     // Phones build the pins after the first touch or scroll, never during first paint.
     await page.waitForTimeout(1500);
@@ -226,13 +253,8 @@ test.describe("case studies", () => {
     await ctx.close();
   });
 
-  test("the nav marks the chapter you are reading and the light takes its colour", async ({ page }) => {
-    await page.goto("/");
-    // Put the CareNexus heading just above the reading line (40% down the screen).
-    await page.evaluate(() => {
-      const top = document.getElementById("carenexus-heading")!.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo(0, top - window.innerHeight * 0.25);
-    });
+  test("on a case study the nav marks Projects and the light takes the project's colour", async ({ page }) => {
+    await page.goto("/work/carenexus");
     await expect(page.locator('nav a[aria-current="location"]')).toHaveText("Projects");
     await expect
       .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue("--glow")), { timeout: 10_000 })
@@ -241,16 +263,17 @@ test.describe("case studies", () => {
 });
 
 test.describe("accessibility", () => {
+  for (const [path, ready] of [["/", "#grind-heading"], ["/work/rideshare", "#rideshare-heading"], ["/work/carenexus", "#carenexus-heading"]] as const)
   for (const motion of ["on", "off"] as const) {
-    test(`no serious or critical axe violations (motion ${motion})`, async ({ page, browserName }) => {
+    test(`no serious or critical axe violations on ${path} (motion ${motion})`, async ({ page, browserName }) => {
       // Headless Firefox on CI intermittently crashes its content process during this long
       // scroll-through. The rules axe checks do not depend on the engine and still run in
       // Chromium and WebKit; the motion-off scan still runs in Firefox.
       test.skip(browserName === "firefox" && motion === "on", "headless Firefox crashes on the long scroll-through in CI");
       if (motion === "off") await page.emulateMedia({ reducedMotion: "reduce" });
-      await page.goto("/");
+      await page.goto(path);
       // Wait until reveals are set up, or the "all visible" check below passes before they start.
-      if (motion === "on") await expect(page.locator("#grind-heading")).toHaveAttribute("data-split-ready", "");
+      if (motion === "on") await expect(page.locator(ready)).toHaveAttribute("data-split-ready", "");
       // Read the page a screen at a time, as a visitor would, so every scroll-triggered reveal
       // fires (a single jump to the bottom can skip triggers on a busy CI machine).
       for (let i = 0; i < 40; i++) {
@@ -335,7 +358,7 @@ test.describe("featured work", () => {
     expect(broken).toBe(0);
   });
 
-  test("each card links its live site and code in a new tab, and its case study on the page", async ({ page }) => {
+  test("each card links its live site and code in a new tab, and its case study page", async ({ page }) => {
     await page.goto("/");
     for (const [slug, live] of [
       ["rideshare", "https://rideshare-platform.vercel.app"],
@@ -346,7 +369,7 @@ test.describe("featured work", () => {
       await expect(card.getByRole("link", { name: /Live site/ })).toHaveAttribute("href", live);
       await expect(card.getByRole("link", { name: /Live site/ })).toHaveAttribute("target", "_blank");
       await expect(card.getByRole("link", { name: /Code/ })).toHaveAttribute("target", "_blank");
-      await expect(card.getByRole("link", { name: "Case study" })).toHaveAttribute("href", `#${slug}`);
+      await expect(card.getByRole("link", { name: "Case study" })).toHaveAttribute("href", `/work/${slug}`);
     }
     // Only CareNexus has a phone view.
     await expect(page.locator('article[aria-labelledby="work-carenexus"] .phone')).toHaveCount(1);
@@ -492,9 +515,9 @@ test.describe("particle hero", () => {
     await expect(layer).toBeAttached({ timeout: 10_000 });
     const canvas = page.getByTestId("particle-canvas");
     await expect(canvas).toHaveAttribute("data-frameloop", "always");
-    await page.locator("#carenexus-heading").scrollIntoViewIfNeeded();
+    await page.locator("#skills-heading").scrollIntoViewIfNeeded();
     await page.mouse.wheel(0, 200);
-    await expect(page.locator("html")).toHaveAttribute("data-chapter", "carenexus");
+    await expect(page.locator("html")).toHaveAttribute("data-chapter", "skills");
     await expect(canvas).toBeAttached();
     // The fixed layer never blocks clicks on the page.
     expect(await layer.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
@@ -621,6 +644,8 @@ test.describe("sharing and search", () => {
 
     const sitemap = await (await request.get("/sitemap.xml")).text();
     expect(sitemap).toContain("<loc>https://sarthxen.vercel.app</loc>");
+    expect(sitemap).toContain("<loc>https://sarthxen.vercel.app/work/rideshare</loc>");
+    expect(sitemap).toContain("<loc>https://sarthxen.vercel.app/work/carenexus</loc>");
     const ld = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent())!);
     expect(ld["@graph"].map((n: { "@type": string }) => n["@type"])).toEqual(
       expect.arrayContaining(["Person", "WebSite", "ProfilePage", "SoftwareApplication"]),
