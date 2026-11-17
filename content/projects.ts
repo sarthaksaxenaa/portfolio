@@ -44,9 +44,9 @@ export const rideshare: ProjectT = Project.parse({
   accent: "#818CF8",
   kicker: "Platform",
   shots: [
-    { src: "/work/rideshare-booking.webp", alt: "RideShare booking screen: a road route across Greater Noida with fares per vehicle" },
-    { src: "/work/rideshare-hero.webp", alt: "RideShare landing page: Motion, Mastered" },
-    { src: "/work/rideshare-how.webp", alt: "RideShare how-it-works: set pickup, choose a ride, track it live" },
+    { src: "/screens/rideshare-booking.webp", alt: "RideShare booking screen: a road route across Greater Noida with fares per vehicle" },
+    { src: "/screens/rideshare-hero.webp", alt: "RideShare landing page: Motion, Mastered" },
+    { src: "/screens/rideshare-how.webp", alt: "RideShare how-it-works: set pickup, choose a ride, track it live" },
   ],
   highlights: [
     "Live trip state to rider and driver over Socket.io rooms",
@@ -99,12 +99,12 @@ export const carenexus: ProjectT = Project.parse({
   accent: "#9B6BFF",
   kicker: "Health",
   shots: [
-    { src: "/work/carenexus-chat.webp", alt: "CareNexus health check with the 3D body map beside the conversation" },
-    { src: "/work/carenexus-home.webp", alt: "CareNexus home page: A Clearer Kind of Care" },
-    { src: "/work/carenexus-dashboard.webp", alt: "CareNexus dashboard with past checks and their urgency" },
-    { src: "/work/carenexus-profile.webp", alt: "CareNexus health profile used to personalise answers" },
+    { src: "/screens/carenexus-chat.webp", alt: "CareNexus health check with the 3D body map beside the conversation" },
+    { src: "/screens/carenexus-home.webp", alt: "CareNexus home page: A Clearer Kind of Care" },
+    { src: "/screens/carenexus-dashboard.webp", alt: "CareNexus dashboard with past checks and their urgency" },
+    { src: "/screens/carenexus-profile.webp", alt: "CareNexus health profile used to personalise answers" },
   ],
-  phoneShot: { src: "/work/carenexus-mobile-chat.webp", alt: "CareNexus health check on a phone" },
+  phoneShot: { src: "/screens/carenexus-mobile-chat.webp", alt: "CareNexus health check on a phone" },
   highlights: [
     "570 automated tests, 94% backend coverage, in CI",
     "Retrieval accuracy raised from 62.8% to 86.0%",

@@ -67,7 +67,7 @@ export const Profile = z.object({
 export type Profile = z.infer<typeof Profile>;
 
 export const Shot = z.object({
-  src: z.string().regex(/^\/work\/[a-z0-9-]+\.webp$/, "Screens live in /public/work as WebP"),
+  src: z.string().regex(/^\/screens\/[a-z0-9-]+\.webp$/, "Screens live in /public/screens as WebP"),
   alt: z.string().min(12),
 });
 export type Shot = z.infer<typeof Shot>;
@@ -89,7 +89,7 @@ export const Project = z.object({
   accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
   /** Featured-work card: the italic script word after the name ("RideShare Platform"). */
   kicker: z.string().min(1).optional(),
-  /** Screens shown in the laptop, in order; served from /public/work. */
+  /** Screens shown in the laptop, in order; served from /public/screens (/work is for pages). */
   shots: z.array(Shot).default([]),
   /** A phone screen overlapping the laptop, when the project has a mobile view. */
   phoneShot: Shot.optional(),

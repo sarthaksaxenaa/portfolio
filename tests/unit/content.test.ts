@@ -121,7 +121,7 @@ describe("Chapters", () => {
 });
 
 describe("Featured work", () => {
-  it("every screen the laptops show exists in /public/work, with real alt text", () => {
+  it("every screen the laptops show exists in /public/screens, with real alt text", () => {
     for (const p of [rideshare, carenexus]) {
       expect(p.shots.length).toBeGreaterThan(1);
       for (const shot of [...p.shots, ...(p.phoneShot ? [p.phoneShot] : [])]) {
@@ -139,8 +139,9 @@ describe("Featured work", () => {
     }
   });
 
-  it("refuses screens outside /public/work or not in WebP", () => {
+  it("refuses screens outside /public/screens or not in WebP, and keeps them out of /work (the pages)", () => {
     const base = { ...carenexus };
+    expect(ok(Project, { ...base, shots: [{ src: "/work/a.webp", alt: "a long enough alt" }] })).toBe(false);
     expect(ok(Project, { ...base, shots: [{ src: "/portrait.png", alt: "a long enough alt" }] })).toBe(false);
     expect(ok(Project, { ...base, shots: [{ src: "https://x.dev/a.webp", alt: "a long enough alt" }] })).toBe(false);
     expect(ok(Project, { ...base, highlights: ["one", "two"] })).toBe(false);
