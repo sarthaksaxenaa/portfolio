@@ -6,18 +6,19 @@ import { Chapters, type Chapter } from "./schema";
  */
 export const chapters: Chapter[] = Chapters.parse([
   { id: "warmup", index: "00", label: "Full-stack engineer", title: "Sarthak Saxena" },
-  { id: "grind", index: "01", label: "Experience", title: "Reps before records" },
-  { id: "rideshare", index: "02", label: "Project · Real-time systems", title: "RideShare" },
-  { id: "carenexus", index: "03", label: "Project · Applied AI", title: "CareNexus" },
-  { id: "overload", index: "04", label: "Focus", title: "Next weight on the bar" },
-  { id: "cooldown", index: "05", label: "Contact", title: "Say hi" },
+  { id: "work", index: "01", label: "Selected work", title: "Featured Engineering" },
+  { id: "grind", index: "02", label: "Experience", title: "Reps before records" },
+  { id: "rideshare", index: "03", label: "Project · Real-time systems", title: "RideShare" },
+  { id: "carenexus", index: "04", label: "Project · Applied AI", title: "CareNexus" },
+  { id: "overload", index: "05", label: "Focus", title: "Next weight on the bar" },
+  { id: "cooldown", index: "06", label: "Contact", title: "Say hi" },
 ]);
 
-/** Top navigation: standard section names. Projects stays active across both case studies. */
+/** Top navigation: standard section names. Projects stays active across the featured work and both case studies. */
 export const navItems = [
   { label: "Home", href: "#warmup", chapters: ["warmup"] },
   { label: "Experience", href: "#grind", chapters: ["grind"] },
-  { label: "Projects", href: "#rideshare", chapters: ["rideshare", "carenexus"] },
+  { label: "Projects", href: "#work", chapters: ["work", "rideshare", "carenexus"] },
   { label: "Focus", href: "#overload", chapters: ["overload"] },
   { label: "Contact", href: "#cooldown", chapters: ["cooldown"] },
 ] as const satisfies ReadonlyArray<{ label: string; href: `#${Chapter["id"]}`; chapters: ReadonlyArray<Chapter["id"]> }>;

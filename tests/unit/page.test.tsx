@@ -55,7 +55,7 @@ describe("home page", () => {
     ]);
     const visibleLabels = [nav.textContent ?? "", ...[...container.querySelectorAll("header p")].map((p) => p.textContent ?? "")];
     for (const text of visibleLabels) {
-      expect(text).not.toMatch(/\b0[0-5]\b/);
+      expect(text).not.toMatch(/\b0[0-6]\b/);
       expect(text).not.toMatch(/warm-up|the grind|set [12]|progressive overload|cool-down/i);
     }
   });

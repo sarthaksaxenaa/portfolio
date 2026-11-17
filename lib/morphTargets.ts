@@ -129,6 +129,7 @@ export function body(count: number): Float32Array {
 /** Chapter → morph index used by the shader (0 portrait, 1 grid, 2 roads, 3 body, 4 sphere). */
 export const MORPH_INDEX: Record<string, number> = {
   warmup: 0,
+  work: 1, // the portrait dissolves into the grid behind the featured work
   grind: 1,
   rideshare: 2,
   carenexus: 3,
@@ -142,6 +143,7 @@ export const MORPH_INDEX: Record<string, number> = {
  */
 export const CHAPTER_OPACITY: Record<string, number> = {
   warmup: 0.95, // the portrait is the hero
+  work: 0.12,
   grind: 0.2,
   rideshare: 0.16,
   carenexus: 0.2,

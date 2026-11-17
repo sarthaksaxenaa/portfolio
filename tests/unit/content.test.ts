@@ -1,8 +1,8 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { Chapters, Decision, Profile, Project, PUBLIC_EMAIL, Stat } from "@/content/schema";
-import { chapters } from "@/content/chapters";
+import { chapters, navItems } from "@/content/chapters";
 import { profile } from "@/content/profile";
 import { carenexus, prodigy, projects, rideshare } from "@/content/projects";
 import { contrastRatio, color } from "@/lib/tokens";
@@ -107,7 +107,7 @@ describe("Projects", () => {
 
 describe("Chapters", () => {
   it("are the six chapters in order", () => {
-    expect(chapters.map((c) => c.index)).toEqual(["00", "01", "02", "03", "04", "05"]);
+    expect(chapters.map((c) => c.index)).toEqual(["00", "01", "02", "03", "04", "05", "06"]);
   });
   it("reject an out-of-order index", () => {
     const swapped = [...chapters];
@@ -115,7 +115,40 @@ describe("Chapters", () => {
     expect(ok(Chapters, swapped)).toBe(false);
   });
   it("reject duplicates and a missing chapter", () => {
-    expect(ok(Chapters, [...chapters.slice(0, 5), { ...chapters[0], index: "05" }])).toBe(false);
+    expect(ok(Chapters, [...chapters.slice(0, 6), { ...chapters[0], index: "06" }])).toBe(false);
     expect(ok(Chapters, chapters.slice(0, 5))).toBe(false);
+  });
+});
+
+describe("Featured work", () => {
+  it("every screen the laptops show exists in /public/work, with real alt text", () => {
+    for (const p of [rideshare, carenexus]) {
+      expect(p.shots.length).toBeGreaterThan(1);
+      for (const shot of [...p.shots, ...(p.phoneShot ? [p.phoneShot] : [])]) {
+        expect(existsSync(join(process.cwd(), "public", shot.src))).toBe(true);
+        expect(shot.alt.length).toBeGreaterThan(12);
+      }
+    }
+  });
+
+  it("each card has exactly three results, a script word, and a live site", () => {
+    for (const p of [rideshare, carenexus]) {
+      expect(p.highlights).toHaveLength(3);
+      expect(p.kicker).toBeTruthy();
+      expect(p.liveUrl).toMatch(/^https:/);
+    }
+  });
+
+  it("refuses screens outside /public/work or not in WebP", () => {
+    const base = { ...carenexus };
+    expect(ok(Project, { ...base, shots: [{ src: "/portrait.png", alt: "a long enough alt" }] })).toBe(false);
+    expect(ok(Project, { ...base, shots: [{ src: "https://x.dev/a.webp", alt: "a long enough alt" }] })).toBe(false);
+    expect(ok(Project, { ...base, highlights: ["one", "two"] })).toBe(false);
+  });
+
+  it("nav Projects opens the featured work and stays lit through both case studies", () => {
+    const projects = navItems.find((n) => n.label === "Projects")!;
+    expect(projects.href).toBe("#work");
+    expect(projects.chapters).toEqual(["work", "rideshare", "carenexus"]);
   });
 });

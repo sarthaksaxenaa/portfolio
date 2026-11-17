@@ -66,6 +66,12 @@ export const Profile = z.object({
 });
 export type Profile = z.infer<typeof Profile>;
 
+export const Shot = z.object({
+  src: z.string().regex(/^\/work\/[a-z0-9-]+\.webp$/, "Screens live in /public/work as WebP"),
+  alt: z.string().min(12),
+});
+export type Shot = z.infer<typeof Shot>;
+
 export const Project = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   name: z.string().min(1),
@@ -81,6 +87,14 @@ export const Project = z.object({
   liveUrl: https.optional(),
   repoUrl: https,
   accent: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+  /** Featured-work card: the italic script word after the name ("RideShare Platform"). */
+  kicker: z.string().min(1).optional(),
+  /** Screens shown in the laptop, in order; served from /public/work. */
+  shots: z.array(Shot).default([]),
+  /** A phone screen overlapping the laptop, when the project has a mobile view. */
+  phoneShot: Shot.optional(),
+  /** Exactly three short results for the card: measured numbers, or what the code really does. */
+  highlights: z.array(z.string().min(1).max(70)).length(3).optional(),
 });
 export type Project = z.infer<typeof Project>;
 
@@ -94,12 +108,12 @@ export const Experience = z.object({
 });
 export type Experience = z.infer<typeof Experience>;
 
-export const ChapterId = z.enum(["warmup", "grind", "rideshare", "carenexus", "overload", "cooldown"]);
+export const ChapterId = z.enum(["warmup", "work", "grind", "rideshare", "carenexus", "overload", "cooldown"]);
 export type ChapterId = z.infer<typeof ChapterId>;
 
 export const Chapter = z.object({
   id: ChapterId,
-  index: z.string().regex(/^0[0-5]$/),
+  index: z.string().regex(/^0[0-6]$/),
   label: z.string().min(1),
   title: z.string().min(1),
 });
@@ -107,7 +121,7 @@ export type Chapter = z.infer<typeof Chapter>;
 
 export const Chapters = z
   .array(Chapter)
-  .length(6)
+  .length(7)
   .superRefine((list, ctx) => {
     list.forEach((c, i) => {
       if (c.index !== `0${i}`)

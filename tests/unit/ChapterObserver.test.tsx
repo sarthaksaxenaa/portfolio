@@ -63,14 +63,17 @@ describe("ChapterObserver", () => {
   it("follows the scroll and tints the light inside a case study", async () => {
     vi.stubGlobal("scrollY", 0);
     render(<Page />);
-    await scrollTo(2 * H);
-    expect(current()).toBe("#rideshare");
+    await scrollTo(1 * H); // featured work: Projects, no tint
+    expect(current()).toBe("#work");
+    expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
+    await scrollTo(3 * H);
+    expect(current()).toBe("#work");
     expect(document.documentElement.getAttribute("data-chapter")).toBe("rideshare");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("129 140 248");
-    await scrollTo(3 * H); // CareNexus: still under "Projects"
-    expect(current()).toBe("#rideshare");
+    await scrollTo(4 * H); // CareNexus: still under "Projects"
+    expect(current()).toBe("#work");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("155 107 255");
-    await scrollTo(4 * H);
+    await scrollTo(5 * H);
     expect(current()).toBe("#overload");
     expect(document.documentElement.style.getPropertyValue("--glow")).toBe("");
   });
@@ -81,11 +84,11 @@ describe("ChapterObserver", () => {
     const on = (e: Event) => seen.push((e as CustomEvent<string>).detail);
     window.addEventListener("chapterchange", on);
     render(<Page />);
-    await scrollTo(2 * H);
-    await scrollTo(2 * H + 100); // same chapter: no duplicate event
+    await scrollTo(1 * H);
+    await scrollTo(1 * H + 100); // same chapter: no duplicate event
     await scrollTo(3 * H);
     window.removeEventListener("chapterchange", on);
-    expect(seen).toEqual(["warmup", "rideshare", "carenexus"]);
+    expect(seen).toEqual(["warmup", "work", "rideshare"]);
   });
 
   it("never marks more than one link", async () => {
