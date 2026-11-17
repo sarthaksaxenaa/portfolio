@@ -354,6 +354,22 @@ test.describe("featured work", () => {
   });
 });
 
+test.describe("menu", () => {
+  test("clear over the hero, then a dark fade behind the links once you scroll", async ({ page }) => {
+    await page.goto("/");
+    const fade = page.locator("nav .nav-fade");
+    const opacity = () => fade.evaluate((el) => +getComputedStyle(el).opacity);
+    expect(await opacity()).toBe(0);
+    await page.locator("#work-heading").scrollIntoViewIfNeeded();
+    await expect.poll(opacity).toBe(1);
+    // Taller than the bar, so text fades out before it reaches the links.
+    const [bar, scrim] = await Promise.all([page.locator("nav").boundingBox(), fade.boundingBox()]);
+    expect(scrim!.height).toBeGreaterThan(bar!.height + 30);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect.poll(opacity).toBe(0);
+  });
+});
+
 test.describe("hero", () => {
   test("PORTFOLIO forms in chrome letters over the role, and Home is marked in red", async ({ page }) => {
     await page.goto("/");
