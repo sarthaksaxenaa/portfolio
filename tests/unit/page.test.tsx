@@ -57,7 +57,6 @@ describe("home page", () => {
       "Experience",
       "Skills",
       "Contact",
-      "Contact",
       "Resume (opens in a new tab)",
     ]);
     const visibleLabels = [nav.textContent ?? "", ...[...container.querySelectorAll("header p")].map((p) => p.textContent ?? "")];
