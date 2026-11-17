@@ -54,6 +54,7 @@ jobs:
             echo "No changes."; exit 0
           fi
           git config user.name "Sarthak090805"
+          # GitHub's noreply address: credited to Sarthak's profile, shows no real email.
           git config user.email "180917503+sarthaksaxenaa@users.noreply.github.com"
           git add docs/assets
           git commit -m "docs(readme): refresh generated assets [skip ci]"
