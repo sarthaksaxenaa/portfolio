@@ -457,6 +457,7 @@ test.describe("opening (first visit)", () => {
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(200);
     await page.locator("#intro").scrollIntoViewIfNeeded();
     await page.getByRole("link", { name: "See the work" }).click();
+    await expect(page.locator("#work-heading")).toBeInViewport();
     await page.reload();
     expect(await preload(page)).toBeNull();
     await expect(page.getByTestId("opening")).toBeHidden();
@@ -501,8 +502,10 @@ test.describe("manifesto and magnetic buttons", () => {
 
   test("CTA leans toward a nearby mouse and springs back", async ({ page }) => {
     await page.goto("/");
+    // The intro card stays hidden until it scrolls into view, so bring it in before asking for its link.
+    await page.locator("#intro").scrollIntoViewIfNeeded();
     const cta = page.getByRole("link", { name: "See the work" });
-    await cta.scrollIntoViewIfNeeded();
+    await expect(cta).toBeVisible();
     await page.waitForTimeout(400);
     const box = (await cta.boundingBox())!;
     const tx = () => cta.evaluate((el) => new DOMMatrix(getComputedStyle(el).transform).m41);
