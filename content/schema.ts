@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isTimeZone } from "@/lib/localTime";
 
 export const PUBLIC_EMAIL = "sarthaksaxena413@gmail.com";
 
@@ -49,6 +50,10 @@ export const Profile = z.object({
   tagline: z.string().min(1),
   role: z.string().min(1),
   location: z.string().min(1),
+  /** Where Sarthak's clock is, for the local time in Contact (an IANA zone, e.g. "Asia/Kolkata"). */
+  timeZone: z.string().refine(isTimeZone, "Not a time zone this browser knows"),
+  /** One line of what he is open to, shown beside a live dot in Contact. Keep it current. */
+  availability: z.string().min(10).max(90),
   email: z.literal(PUBLIC_EMAIL, { message: `Public email must be ${PUBLIC_EMAIL}` }),
   education: z.object({
     degree: z.string().min(1),

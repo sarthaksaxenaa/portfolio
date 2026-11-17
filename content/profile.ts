@@ -5,6 +5,8 @@ export const profile: ProfileT = Profile.parse({
   tagline: "Sure enough to burn the ships.",
   role: "Full-stack engineer",
   location: "Greater Noida, India",
+  timeZone: "Asia/Kolkata",
+  availability: "Open to software engineering internships and new-grad roles",
   email: PUBLIC_EMAIL,
   education: {
     degree: "B.Tech, Computer Science and Engineering (AI & ML)",
