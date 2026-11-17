@@ -9,21 +9,21 @@
 <rect width="1200" height="300" rx="16" fill="#050506" stroke="rgba(255,255,255,0.08)"/>
 <text x="48" y="44" class="m" font-size="14" letter-spacing="1.2">MEASURED, NOT CLAIMED · 2026-11-17</text>
 <g class="c" style="animation-delay:0.00s"><line x1="48" y1="68" x2="376" y2="68" stroke="rgba(255,255,255,0.08)"/>
-<text x="48" y="120" class="t" font-size="44" font-weight="700" letter-spacing="-1">266/266</text>
+<text x="48" y="120" class="t" font-size="44" font-weight="700" letter-spacing="-1">270/270</text>
 <text x="48" y="146" class="m" font-size="14">unit tests</text></g>
 <g class="c" style="animation-delay:0.07s"><line x1="448" y1="68" x2="776" y2="68" stroke="rgba(255,255,255,0.08)"/>
-<text x="448" y="120" class="t" font-size="44" font-weight="700" letter-spacing="-1">154/154</text>
+<text x="448" y="120" class="t" font-size="44" font-weight="700" letter-spacing="-1">163/163</text>
 <text x="448" y="146" class="m" font-size="14">e2e runs, 3 engines</text></g>
 <g class="c" style="animation-delay:0.14s"><line x1="848" y1="68" x2="1176" y2="68" stroke="rgba(255,255,255,0.08)"/>
 <text x="848" y="120" class="t" font-size="44" font-weight="700" letter-spacing="-1">100</text>
 <text x="848" y="146" class="m" font-size="14">Lighthouse accessibility</text></g>
 <g class="c" style="animation-delay:0.21s"><line x1="48" y1="178" x2="376" y2="178" stroke="rgba(255,255,255,0.08)"/>
-<text x="48" y="230" class="t" font-size="44" font-weight="700" letter-spacing="-1">90</text>
+<text x="48" y="230" class="t" font-size="44" font-weight="700" letter-spacing="-1">84</text>
 <text x="48" y="256" class="m" font-size="14">Lighthouse performance (mobile)</text></g>
 <g class="c" style="animation-delay:0.28s"><line x1="448" y1="178" x2="776" y2="178" stroke="rgba(255,255,255,0.08)"/>
 <text x="448" y="230" class="t" font-size="44" font-weight="700" letter-spacing="-1">0.8 s</text>
 <text x="448" y="256" class="m" font-size="14">LCP, mobile (simulated)</text></g>
 <g class="c" style="animation-delay:0.35s"><line x1="848" y1="178" x2="1176" y2="178" stroke="rgba(255,255,255,0.08)"/>
-<text x="848" y="230" class="t" font-size="44" font-weight="700" letter-spacing="-1">578 ms</text>
+<text x="848" y="230" class="t" font-size="44" font-weight="700" letter-spacing="-1">293 ms</text>
 <text x="848" y="256" class="m" font-size="14">live site · HTTP 200</text></g>
 </svg>
